@@ -58,6 +58,10 @@ Build:
     Path: appveyor
     Argument: [ 'PushArtifact', '.output/Carbon.DSC-$(WHISKEY_SEMVER2).zip', '-DeploymentName', 'GitHub' ]
 
+- PowerShell:
+    OnlyDuring: Build
+    Path: Start-CarbonTest.ps1
+
 - Pester:
     Configuration:
         Run:
