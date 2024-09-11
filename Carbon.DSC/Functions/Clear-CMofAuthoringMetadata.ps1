@@ -58,17 +58,17 @@ function Clear-CMofAuthoringMetadata
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(
-        [Parameter(Mandatory=$true)]
-        [String]
         # The path to the file/directory whose .mof files should be operated on.
-        $Path
+        [Parameter(Mandatory)]
+        [String] $Path
     )
 
     Set-StrictMode -Version 'Latest'
-
     Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
 
-    $tempDir = New-CTempDirectory -Prefix ('Carbon+ClearMofAuthoringMetadata+') -WhatIf:$false
+    $tempDirName = "CDsc+Clear-CMofAuthoringMetadata+$([IO.Path]::GetRandomFileName())"
+    $tempDir = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath $tempDirName
+    New-Item -Path $tempDir -ItemType 'Directory' -WhatIf:$false
 
     foreach( $item in (Get-ChildItem -Path $Path -Filter '*.mof') )
     {

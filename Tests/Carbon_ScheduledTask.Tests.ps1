@@ -16,25 +16,39 @@ Set-StrictMode -Version 'Latest'
 BeforeAll {
     Set-StrictMode -Version 'Latest'
 
-    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-CarbonTest.ps1' -Resolve) -ForDsc
+    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
+
+    $psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Carbon.DSC\Modules' -Resolve
+    Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+                  -Function @(
+                        'Get-CScheduledTask',
+                        'Install-CScheduledTask',
+                        'Install-CUser',
+                        'Test-CScheduledTask',
+                        'Uninstall-CScheduledTask'
+                    ) `
+                  -Verbose:$false
+    Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon.Accounts' -Resolve) `
+                  -Function @('Resolve-CIdentity') `
+                  -Verbose:$false
 
     $script:psModulePath = $env:PSModulePath
 
-    if (-not (Get-Module -Name 'Carbon' -ListAvailable))
-    {
-        $env:PSModulePath =
-        "$(Join-Path -Path $PSScriptRoot -ChildPath '..' -Resolve)$([IO.Path]::PathSeparator)$($env:PSModulePath)"
-    }
+    # if (-not (Get-Module -Name 'Carbon' -ListAvailable))
+    # {
+    #     $env:PSModulePath =
+    #     "$(Join-Path -Path $PSScriptRoot -ChildPath '..' -Resolve)$([IO.Path]::PathSeparator)$($env:PSModulePath)"
+    # }
 
-    $script:credential = New-CCredential -User 'CarbonDscTestUser' -Password ([Guid]::NewGuid().ToString())
+    $password = ConvertTo-SecureString -String ([Guid]::NewGuid().ToString()) -AsPlainText -Force
+    $script:credential = [pscredential]::New('CarbonDscTestUser', $password)
     Install-CUser -Credential $script:credential
-    $script:sid = Resolve-CIdentity -Name $script:credential.UserName -NoWarn | Select-Object -ExpandProperty 'Sid'
+    $script:sid = Resolve-CIdentity -Name $script:credential.UserName | Select-Object -ExpandProperty 'Sid'
     $script:tempDir = $null
-    $taskXmlPath = Join-Path -Path $PSScriptRoot -ChildPath 'ScheduledTasks\task.xml' -Resolve
+    $taskXmlPath = Join-Path -Path $PSScriptRoot -ChildPath 'task.xml' -Resolve
     $script:taskForUser = Get-Content -Path $taskXmlPath -Raw
     $script:taskForUser = $script:taskForUser -replace '<UserId>[^<]+</UserId>',('<UserId>{0}</UserId>' -f $script:sid)
-    $taskWithPrincipalXmlPath =
-        Join-Path -Path $PSScriptRoot -ChildPath 'ScheduledTasks\task_with_principal.xml' -Resolve
+    $taskWithPrincipalXmlPath = Join-Path -Path $PSScriptRoot -ChildPath 'task_with_principal.xml' -Resolve
     $script:taskForSystem = Get-Content -Path $taskWithPrincipalXmlPath -Raw
     $script:taskName = 'CarbonDscScheduledTask'
 
@@ -43,14 +57,14 @@ BeforeAll {
 
 AfterAll {
     Stop-CarbonDscTestFixture
-    Uninstall-CScheduledTask -Name $script:taskName -NoWarn
+    Uninstall-CScheduledTask -Name $script:taskName
     $env:PSModulePath = $script:psModulePath
 }
 
 Describe 'Carbon_ScheduledTask' {
     # Windows 2012R2 returns different XML than what we put in so we need to make the resource smarter about its XML
     # difference detection.
-    $os = Get-CimInstance Win32_OperatingSystem
+    $os = Get-CimInstance -ClassName 'Win32_OperatingSystem'
     $skip = $os.Caption -like '*2012 R2*'
 
     BeforeEach {
@@ -58,14 +72,14 @@ Describe 'Carbon_ScheduledTask' {
     }
 
     AfterEach {
-        Uninstall-CScheduledTask -Name $script:taskName -NoWarn
+        Uninstall-CScheduledTask -Name $script:taskName
     }
 
     It 'should get existing tasks' {
-        Get-CScheduledTask -AsComObject -NoWarn |
+        Get-CScheduledTask -AsComObject |
             Select-Object -First 5 |
             ForEach-Object {
-                $comTask = $expectedXml = Get-CScheduledTask -Name $_.Path -AsComObject -NoWarn
+                $comTask = $expectedXml = Get-CScheduledTask -Name $_.Path -AsComObject
                 $expectedXml = $comTask.Xml
 
                 [String]$expectedCredential =
@@ -162,7 +176,8 @@ Describe 'Carbon_ScheduledTask' {
     It 'should test task credential canonical versus short username' -Skip:$skip {
         Set-TargetResource -Name $script:taskName -TaskXml $script:taskForUser -TaskCredential $script:credential
         $username = "$([Environment]::MachineName)\$($script:credential.UserName)"
-        $credWithFullUserName = New-Credential -UserName $username -Password 'snafu'
+        $password = ConvertTo-SecureString -String 'snafu' -Force -AsPlainText
+        $credWithFullUserName = [pscredential]::New($username, $password)
         Test-TargetResource -Name $script:taskName -TaskXml $script:taskForUser -TaskCredential $credWithFullUserName |
             Should -BeTrue
     }
@@ -171,7 +186,7 @@ Describe 'Carbon_ScheduledTask' {
         (Test-Path -Path 'env:WHS_CI') -and $env:WHS_CI -eq 'True' -and $PSVersionTable['PSVersion'].Major -eq 7
 
     It 'should run through DSC' -Skip:($skipDscTest -or $skip) {
-        . (Join-Path -Path $PSScriptRoot -ChildPath 'CarbonDscTest\ScheduledTask.ps1' -Resolve)
+        . (Join-Path -Path $PSScriptRoot -ChildPath 'Configurations\ScheduledTask.ps1' -Resolve)
 
         $configArgs = @{
             Name = $script:taskName;

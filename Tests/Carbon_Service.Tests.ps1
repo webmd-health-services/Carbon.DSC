@@ -4,11 +4,22 @@ Set-StrictMode -Version 'Latest'
 
 BeforeAll {
     Set-StrictMode -Version 'Latest'
-    Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath 'CarbonDscTest' -Resolve) -Force
+
+    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
+
+    $psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Carbon.DSC\Modules' -Resolve
+    Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+                  -Function @('Install-CUser', 'Uninstall-CService') `
+                  -Verbose:$false
+    Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon.Accounts' -Resolve) `
+                  -Function @('Resolve-CIdentity', 'Resolve-CIdentityName', 'Test-CIdentity') `
+                  -Verbose:$false
+
 
     $script:testDirPath = ''
     $script:testNum = 0
-    $script:credential = New-CCredential -User 'CarbonDscTestUser' -Password ([Guid]::NewGuid().ToString())
+    $password = ConvertTo-SecureString -String ([Guid]::NewGuid().ToString()) -AsPlainText -Force
+    $script:credential = [pscredential]::New('CarbonDscTestUser', $password)
     $script:servicePath = $null
     $script:serviceName = 'CarbonDscTestService'
     Install-CUser -Credential $script:credential
@@ -27,7 +38,7 @@ Describe 'Carbon_Service' {
         $Global:Error.Clear()
         $script:testDirPath = Join-Path -Path $TestDrive -ChildPath $script:testNum
         New-item -Path $script:testDirPath -ItemType 'Directory'
-        Copy-Item -Path (Join-Path -Path $PSScriptRoot -ChildPath 'Service\NoOpService.exe') -Destination $script:testDirPath
+        Copy-Item -Path (Join-Path -Path $PSScriptRoot -ChildPath 'NoOpService.exe') -Destination $script:testDirPath
         $script:servicePath = Join-Path -Path $script:testDirPath -ChildPath 'NoOpService.exe'
     }
 
@@ -43,7 +54,7 @@ Describe 'Carbon_Service' {
             Where-Object { (-Not [String]::IsNullOrWhitespace($_.Name)) } |
             Select-Object -First 1 |
             ForEach-Object {
-                Write-Verbose -Message ($_.Name) -Verbose
+                Write-Verbose -Message ($_.Name)
                 $resource = Get-TargetResource -Name $_.Name
                 $Global:Error.Count | Should -Be 0
                 $resource | Should -Not -BeNullOrEmpty
@@ -64,9 +75,9 @@ Describe 'Carbon_Service' {
                 $resource.DisplayName | Should -Be $_.DisplayName
                 $resource.Description | Should -Be $_.Description
                 ($resource.Dependency -join ',') | Should -Be (($_.ServicesDependedOn | Select-Object -ExpandProperty 'Name') -join ',')
-                if( $_.UserName -and (Test-CIdentity -Name $_.UserName -NoWarn) )
+                if( $_.UserName -and (Test-CIdentity -Name $_.UserName) )
                 {
-                    $resource.UserName | Should -Be (Resolve-CIdentityName -Name $_.UserName -NoWarn)
+                    $resource.UserName | Should -Be (Resolve-CIdentityName -Name $_.UserName)
                 }
                 else
                 {
@@ -165,7 +176,7 @@ Describe 'Carbon_Service' {
         $resource.RunCommandDelay | Should -Be (60*1000)
         $resource.DisplayName | Should -Be 'Display Name'
         $resource.Description | Should -Be 'Description description description'
-        $resource.UserName | Should -Be (Resolve-CIdentity -Name $script:credential.UserName -NoWarn).FullName
+        $resource.UserName | Should -Be (Resolve-CIdentity -Name $script:credential.UserName).FullName
         $resource.Credential | Should -BeNullOrEmpty
         $resource.ArgumentList | Should -Be $null
         Assert-DscResourcePresent $resource
@@ -321,7 +332,7 @@ Describe 'Carbon_Service' {
 
             Set-StrictMode -Off
 
-            Import-DscResource -Name '*' -Module 'Carbon'
+            Import-DscResource -Name '*' -Module 'Carbon.DSC'
 
             node 'localhost'
             {

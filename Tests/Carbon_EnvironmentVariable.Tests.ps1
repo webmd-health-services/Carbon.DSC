@@ -5,7 +5,7 @@ Set-StrictMode -Version 'Latest'
 BeforeAll {
     Set-StrictMode -Version 'Latest'
 
-    Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath 'CarbonDscTest' -Resolve) -Force
+    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
 
     function Assert-EnvironmentVariable
     {
@@ -101,7 +101,7 @@ Describe 'Carbon_EnvironmentVariable' {
 
             Set-StrictMode -Off
 
-            Import-DscResource -Name '*' -Module 'Carbon'
+            Import-DscResource -Name '*' -Module 'Carbon.DSC'
 
             node 'localhost'
             {

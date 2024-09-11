@@ -60,7 +60,7 @@ Build:
 
 - PowerShell:
     OnlyDuring: Build
-    Path: Start-CarbonTest.ps1
+    Path: Start-CarbonDscTest.ps1
 
 - Pester:
     Configuration:
@@ -74,6 +74,10 @@ Build:
             TestSuiteName: Carbon.DSC
         Output:
             Verbosity: Detailed
+
+- PowerShell:
+    OnlyDuring: Build
+    Path: Complete-CarbonDscTest.ps1
 
 - PublishPowerShellModule:
     Path: Carbon.DSC

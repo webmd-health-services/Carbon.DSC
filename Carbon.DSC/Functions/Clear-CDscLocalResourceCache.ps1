@@ -18,10 +18,9 @@ function Clear-CDscLocalResourceCache
     )
 
     Set-StrictMode -Version 'Latest'
-
     Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
 
-    Get-CCimInstance -Class 'msft_providers' | 
+    Get-CimInstance -Class 'msft_providers' |
         Where-Object {$_.provider -like 'dsccore'} |
         Select-Object -ExpandProperty HostProcessIdentifier |
         ForEach-Object { Get-Process -ID $_ } |

@@ -10,7 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-& (Join-Path -Path $PSScriptRoot -ChildPath '..\Initialize-CarbonDscResource.ps1' -Resolve)
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\..\Modules' -Resolve
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+              -Function @(
+                    'ConvertTo-CContainerInheritanceFlags',
+                    'Get-CPermission',
+                    'Grant-CPermission',
+                    'Revoke-CPermission'
+                )
 
 function Get-TargetResource
 {
@@ -56,7 +63,7 @@ function Get-TargetResource
                         Ensure = 'Absent';
                     }
 
-    $perms = Get-CPermission -Path $Path -Identity $Identity -NoWarn
+    $perms = Get-CPermission -Path $Path -Identity $Identity
     if( -not $perms )
     {
         return $defaultState
@@ -72,8 +79,7 @@ function Get-TargetResource
                                             Where-Object { $_ -ne 'Synchronize' }
 
         $resource.ApplyTo = ConvertTo-CContainerInheritanceFlags -InheritanceFlags $perm.InheritanceFlags `
-                                                                 -PropagationFlags $perm.PropagationFlags `
-                                                                 -NoWarn
+                                                                 -PropagationFlags $perm.PropagationFlags
         $resource.Ensure = 'Present'
         $resource
     }
@@ -300,7 +306,7 @@ function Set-TargetResource
     if( $Ensure -eq 'Absent' )
     {
         Write-Verbose ('Revoking permission for "{0}" to "{1}"' -f $Identity,$Path)
-        Revoke-CPermission -Path $Path -Identity $Identity -NoWarn
+        Revoke-CPermission -Path $Path -Identity $Identity
     }
     else
     {
@@ -311,7 +317,7 @@ function Set-TargetResource
         }
 
         Write-Verbose ('Granting permission for "{0}" to "{1}": {2}' -f $Identity,$Path,($Permission -join ','))
-        Grant-CPermission @PSBoundParameters -NoWarn
+        Grant-CPermission @PSBoundParameters
     }
 }
 

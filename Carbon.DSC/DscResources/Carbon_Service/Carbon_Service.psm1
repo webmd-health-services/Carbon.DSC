@@ -10,7 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-& (Join-Path -Path $PSScriptRoot -ChildPath '..\Initialize-CarbonDscResource.ps1' -Resolve)
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\..\Modules' -Resolve
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+              -Function @('Install-CService', 'Test-CService', 'Uninstall-CService' )
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon.Accounts' -Resolve) `
+              -Function @('Resolve-CIdentity')
 
 function Get-TargetResource
 {
@@ -142,7 +146,7 @@ function Get-TargetResource
         $actualUserName = ''
         if( $service.UserName )
         {
-            $actualUserName = Resolve-CIdentity -Name $service.UserName -NoWarn -ErrorAction Ignore
+            $actualUserName = Resolve-CIdentity -Name $service.UserName -ErrorAction Ignore
             if( $actualUserName )
             {
                 $resource.UserName = $actualUserName.FullName
@@ -471,7 +475,7 @@ function Test-TargetResource
 
     if( $PSBoundParameters.ContainsKey( 'UserName' ) )
     {
-        $identity = Resolve-CIdentity -Name $UserName -NoWarn
+        $identity = Resolve-CIdentity -Name $UserName
         if( $identity )
         {
             $PSBoundParameters['UserName'] = $identity.FullName
@@ -486,7 +490,7 @@ function Test-TargetResource
     if( $PSBoundParameters.ContainsKey('Credential') )
     {
         [void]$PSBoundParameters.Remove('Credential')
-        $identity = Resolve-CIdentity -Name $Credential.UserName -NoWarn -ErrorAction Ignore
+        $identity = Resolve-CIdentity -Name $Credential.UserName -ErrorAction Ignore
         if( $identity )
         {
             $PSBoundParameters.UserName = $identity.FullName

@@ -1,12 +1,28 @@
 {
 	"PSModules": [
     {
+      "Name": "Carbon",
+      "Version": "2.*"
+    },
+    {
+      "Name": "Carbon.Accounts",
+      "Version": "1.*"
+    },
+    {
+      "Name": "Carbon.Core",
+      "Version": "1.*"
+    },
+    {
       "Name": "Carbon.Cryptography",
       "Version": "3.*"
     },
     {
-      "Name": "Carbon.Core",
-      "Version": "*"
+      "Name": "Carbon.ScheduledTasks",
+      "Version": "1.*"
+    },
+    {
+      "Name": "Carbon.Security",
+      "Version": "1.*"
     }
 	],
   "PSModulesDirectoryName": "Modules"

@@ -10,7 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-& (Join-Path -Path $PSScriptRoot -ChildPath '..\Initialize-CarbonDscResource.ps1' -Resolve)
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\..\Modules' -Resolve
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+              -Function @(
+                    'Get-CScheduledTask',
+                    'Install-CScheduledTask',
+                    'Test-CScheduledTask',
+                    'Uninstall-CScheduledTask'
+                )
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon.Accounts' -Resolve) `
+              -Function @('Resolve-CIdentityName')
 
 function Get-TargetResource
 {
@@ -53,9 +62,9 @@ function Get-TargetResource
                     Ensure = 'Absent';
                 }
 
-    if( (Test-CScheduledTask -Name $canonicalName -NoWarn) )
+    if( (Test-CScheduledTask -Name $canonicalName) )
     {
-        $task = Get-CScheduledTask -Name $canonicalName -AsComObject -NoWarn
+        $task = Get-CScheduledTask -Name $canonicalName -AsComObject
         $principal = $task.Definition.Principal
         $principalName = $principal.UserId
         if( -not $principalName )
@@ -164,7 +173,7 @@ function Set-TargetResource
     if( $Ensure -eq 'Present' )
     {
         $installParams = @{ }
-        if( (Test-CScheduledTask -Name $Name -NoWarn ) )
+        if( (Test-CScheduledTask -Name $Name) )
         {
             Write-Verbose ('[{0}] Re-installing' -f $Name)
             $installParams['Force'] = $true
@@ -173,12 +182,12 @@ function Set-TargetResource
         {
             Write-Verbose ('[{0}] Installing' -f $Name)
         }
-        Install-CScheduledTask @PSBoundParameters @installParams -NoWarn
+        Install-CScheduledTask @PSBoundParameters @installParams
     }
     else
     {
         Write-Verbose ('[{0}] Uninstalling' -f $Name)
-        Uninstall-CScheduledTask -Name $Name -NoWarn
+        Uninstall-CScheduledTask -Name $Name
     }
 
 }
@@ -283,11 +292,11 @@ function Test-TargetResource
 
         if( $TaskCredential )
         {
-            $resourceUserName = $resource.TaskCredential | ForEach-Object { Resolve-CIdentityName -Name $_ -NoWarn }
-            $desiredUserName = $TaskCredential.UserName | ForEach-Object { Resolve-CIdentityName -Name $_ -NoWarn }
+            $resourceUserName = $resource.TaskCredential | ForEach-Object { Resolve-CIdentityName -Name $_ }
+            $desiredUserName = $TaskCredential.UserName | ForEach-Object { Resolve-CIdentityName -Name $_ }
             if( $resourceUserName -ne $desiredUserName )
             {
-                Write-Verbose ('[{0}] [TaskCredential] {1} != {2}' -f $Name,$resourceUserName,$desiredUserName) -Verbose
+                Write-Verbose ('[{0}] [TaskCredential] {1} != {2}' -f $Name,$resourceUserName,$desiredUserName)
                 return $false
             }
         }

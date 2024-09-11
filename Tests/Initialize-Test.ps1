@@ -58,9 +58,9 @@ finally
     $Global:WhatIfPreference = $originalWhatIfPref
 }
 
-$gModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\PSModules' -Resolve
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Carbon.DSC\Modules' -Resolve
 
-Import-Module -Name (Join-Path -Path $gModulesPath -ChildPath 'Carbon' -Resolve) `
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
               -Function @('Install-CUser', 'Test-CUser') `
               -Verbose:$false
 

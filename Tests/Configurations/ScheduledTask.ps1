@@ -9,7 +9,7 @@ configuration CScheduledTaskTestCfg
 
     Set-StrictMode -Off
 
-    Import-DscResource -Name '*' -Module 'Carbon'
+    Import-DscResource -Name '*' -Module 'Carbon.DSC'
 
     node 'localhost'
     {

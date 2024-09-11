@@ -1,8 +1,8 @@
 {
 	"PSModules": [
     {
-      "Name": "Carbon",
-      "Version": "*"
+      "Name": "Carbon.FileSystem",
+      "Version": "1.*"
     }
 	]
 }

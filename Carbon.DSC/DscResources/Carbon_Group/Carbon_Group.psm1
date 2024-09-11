@@ -10,8 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-& (Join-Path -Path $PSScriptRoot -ChildPath '..\Initialize-CarbonDscResource.ps1' -Resolve)
-. (Join-Path -Path $PSScriptRoot -ChildPath '..\..\Functions\Use-CallerPreference.ps1' -Resolve)
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\..\Modules' -Resolve
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+              -Function @('Install-CGroup', 'Get-CGroup', 'Test-CGroup', 'Uninstall-CGroup')
+
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon.Accounts' -Resolve) `
+              -Function @('Resolve-CIdentity', 'Resolve-CIdentityName')
 
 function Get-TargetResource
 {
@@ -25,7 +29,6 @@ function Get-TargetResource
     )
 
     Set-StrictMode -Version 'Latest'
-    Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
 
     $group = Get-CGroup -Name $Name -ErrorAction Ignore
 
@@ -125,7 +128,6 @@ function Set-TargetResource
     )
 
     Set-StrictMode -Version 'Latest'
-    Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
 
     if( $Ensure -eq 'Absent' )
     {
@@ -192,7 +194,6 @@ function Test-TargetResource
     )
 
     Set-StrictMode -Version 'Latest'
-    Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
 
     $resource = Get-TargetResource -Name $Name
 
@@ -264,7 +265,7 @@ function Resolve-MemberName
 
     process
     {
-        Resolve-CIdentityName -Name $Name -NoWarn
+        Resolve-CIdentityName -Name $Name
     }
 }
 
@@ -277,7 +278,7 @@ function Resolve-PrincipalName
 
     process
     {
-        Resolve-CIdentity -SID $Principal.Sid.Value -NoWarn | Select-Object -ExpandProperty 'FullName'
+        Resolve-CIdentity -SID $Principal.Sid.Value | Select-Object -ExpandProperty 'FullName'
     }
 }
 

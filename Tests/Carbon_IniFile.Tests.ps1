@@ -5,10 +5,16 @@ Set-StrictMode -Version 'Latest'
 BeforeAll {
     Set-StrictMode -Version 'Latest'
 
-    Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath 'CarbonDscTest' -Resolve) -Force
+    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
+
+    $psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Carbon.DSC\Modules' -Resolve
+    Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+                  -Function @('Split-CIni') `
+                  -Verbose:$false
 
     $script:testConfigName = 'CarbonIniFileOption'
     $script:tempDir = $null
+    $script:testNum = 0
     $script:iniPath = $null
     $script:sectionName = $null
     $script:defaultValue = $null
@@ -59,8 +65,8 @@ AfterAll {
 Describe 'Carbon_IniFile' {
     BeforeEach {
         $Global:Error.Clear()
-
-        $script:tempDir = New-TempDir -Prefix $PSCommandPath
+        $script:tempDir = Join-Path -Path $TestDrive -ChildPath ($script:testNum++)
+        New-Item -Path $script:tempDir -ItemType Directory
         $script:iniPath = Join-Path -Path $script:tempDir -ChildPath 'ini'
         $script:defaultValue = [Guid]::NewGuid().ToString()
         $script:defaultValue2 = [Guid]::NewGuid().ToString()
@@ -238,7 +244,7 @@ prefix = {2}
 
             Set-StrictMode -Off
 
-            Import-DscResource -Name '*' -Module 'Carbon'
+            Import-DscResource -Name '*' -Module 'Carbon.DSC'
 
             node 'localhost'
             {

@@ -5,7 +5,16 @@ Set-StrictMode -Version 'Latest'
 BeforeAll {
     Set-StrictMode -Version 'Latest'
 
-    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-CarbonTest.ps1' -Resolve) -ForDsc
+    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
+
+    $psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Carbon.DSC\Modules' -Resolve
+    Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+                  -Function @('Get-CGroup', 'Install-CUser', 'Install-CGroup', 'Test-CGroup') `
+                  -Verbose:$false
+
+    Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon.Accounts' -Resolve) `
+                  -Function @('Resolve-CIdentity') `
+                  -Verbose:$false
 
     $script:groupName = 'CarbonGroupTest'
     $script:username1 = $CarbonTestUser.UserName
@@ -17,9 +26,14 @@ BeforeAll {
     $script:description = 'Group for testing Carbon''s Group DSC resource.'
 
     Start-CarbonDscTestFixture 'Group'
-    $script:user1 = Resolve-CIdentity -Name $CarbonTestUser.UserName -NoWarn
-    $script:user2 = Install-CUser -Credential (New-CCredential -UserName $script:username2 -Password 'P@ssw0rd1') -Description 'Carbon test user' -PassThru
-    $script:user3 = Install-CUser -Credential (New-CCredential -UserName $script:username3 -Password 'P@ssw0rd1') -Description 'Carbon test user' -PassThru
+    $script:user1 = Resolve-CIdentity -Name $CarbonTestUser.UserName
+    $password = ConvertTo-SecureString -String 'P@ssw0rd1' -Force -AsPlainText
+    $script:user2 = Install-CUser -Credential ([pscredential]::New($script:username2,$password)) `
+                                  -Description 'Carbon test user' `
+                                  -PassThru
+    $script:user3 = Install-CUser -Credential ([pscredential]::New($script:username3,$password)) `
+                                  -Description 'Carbon test user' `
+                                  -PassThru
     Install-CGroup -Name $script:groupName -Description $script:description -Member $script:username1,$script:username2
 }
 
@@ -33,7 +47,7 @@ Describe 'Carbon_Group' {
     }
 
     It 'get target resource' {
-        $admins = Get-CGroup 'Administrators'
+        $admins = Get-CGroup -Name 'Administrators'
 
         $groupName = 'Administrators'
         $resource = Get-TargetResource -Name $groupName
@@ -196,7 +210,7 @@ Describe 'Carbon_Group' {
 
             Set-StrictMode -Off
 
-            Import-DscResource -Name '*' -Module 'Carbon'
+            Import-DscResource -Name '*' -Module 'Carbon.DSC'
 
             node 'localhost'
             {

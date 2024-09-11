@@ -4,7 +4,13 @@ Set-StrictMode -Version 'Latest'
 
 BeforeAll {
     Set-StrictMode -Version 'Latest'
-    Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath 'CarbonDscTest' -Resolve) -Force
+
+    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
+
+    $psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Carbon.DSC\Modules' -Resolve
+    Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+                  -Function @('Get-CFirewallRule') `
+                  -Verbose:$false
 
     $script:ruleName = 'CarbonDscFirewallRule'
 
@@ -16,7 +22,7 @@ BeforeAll {
             $Name = $script:ruleName
         )
 
-        if( Get-FirewallRule -Name $Name )
+        if( Get-CFirewallRule -Name $Name )
         {
             netsh advfirewall firewall delete rule name=$Name
         }
@@ -298,7 +304,7 @@ Describe 'Carbon_FirewallRule' {
         $rule.EdgeTraversalPolicy | Should -Be 'Yes'
 
         Set-TargetResource -Name $script:ruleName -Direction In -Action Allow -Security Authenticate -EdgeTraversalPolicy No -Ensure Present
-        $rule = Get-FirewallRule -Name $script:ruleName
+        $rule = Get-CFirewallRule -Name $script:ruleName
         $rule | Should -Not -BeNullOrEmpty
         netsh advfirewall firewall show rule "name=$script:ruleName" verbose |
             Where-Object { $_ -match '\bAuthenticate\b' } |
@@ -310,7 +316,7 @@ Describe 'Carbon_FirewallRule' {
         Set-TargetResource -Name $script:ruleName -ErrorAction SilentlyContinue
         $Global:Error.Count | Should -BeGreaterThan 0
         $Global:Error[0] | Should -Match '\bDirection\b.*\bAction\b'
-        (Get-FirewallRule -Name $script:ruleName) | Should -BeNullOrEmpty
+        (Get-CFirewallRule -Name $script:ruleName) | Should -BeNullOrEmpty
     }
 
     $skipDscTest =
@@ -325,7 +331,7 @@ Describe 'Carbon_FirewallRule' {
 
             Set-StrictMode -Off
 
-            Import-DscResource -Name '*' -Module 'Carbon'
+            Import-DscResource -Name '*' -Module 'Carbon.DSC'
 
             node 'localhost'
             {
@@ -344,7 +350,7 @@ Describe 'Carbon_FirewallRule' {
         Start-DscConfiguration -Wait -ComputerName 'localhost' -Path $CarbonDscOutputRoot -Force
         $Global:Error.Count | Should -Be 0
 
-        $rule = Get-FirewallRule -Name $script:ruleName
+        $rule = Get-CFirewallRule -Name $script:ruleName
         $rule | Should -Not -BeNullOrEmpty
         $rule.Name | Should -Be $script:ruleName
         $rule.Direction | Should -Be 'In'
@@ -354,7 +360,7 @@ Describe 'Carbon_FirewallRule' {
         Start-DscConfiguration -Wait -ComputerName 'localhost' -Path $CarbonDscOutputRoot -Force
         $Global:Error.Count | Should -Be 0
 
-        $rule = Get-FirewallRule -Name $script:ruleName
+        $rule = Get-CFirewallRule -Name $script:ruleName
         $rule | Should -BeNullOrEmpty
 
         $result = Get-DscConfiguration
@@ -377,7 +383,7 @@ Describe 'Carbon_FirewallRule' {
 
             Set-StrictMode -Off
 
-            Import-DscResource -Name '*' -Module 'Carbon'
+            Import-DscResource -Name '*' -Module 'Carbon.DSC'
 
             node 'localhost'
             {
@@ -397,7 +403,7 @@ Describe 'Carbon_FirewallRule' {
         Start-DscConfiguration -Wait -ComputerName 'localhost' -Path $CarbonDscOutputRoot -Force
         $Global:Error.Count | Should -Be 0
 
-        $rule = Get-FirewallRule -Name $script:ruleName
+        $rule = Get-CFirewallRule -Name $script:ruleName
         $rule | Should -Not -BeNullOrEmpty
         $rule.Profile | Should -Match '\bPublic\b'
         $rule.Profile | Should -Match '\bPrivate\b'
@@ -405,7 +411,7 @@ Describe 'Carbon_FirewallRule' {
         & DscConfiguration -Ensure 'Absent' -OutputPath $CarbonDscOutputRoot
         Start-DscConfiguration -Wait -ComputerName 'localhost' -Path $CarbonDscOutputRoot -Force
         $Global:Error.Count | Should -Be 0
-        Get-FirewallRule -Name $script:ruleName | Should -BeNullOrEmpty
+        Get-CFirewallRule -Name $script:ruleName | Should -BeNullOrEmpty
 
     }
 }

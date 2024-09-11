@@ -10,7 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-& (Join-Path -Path $PSScriptRoot -ChildPath '..\Initialize-CarbonDscResource.ps1' -Resolve)
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\..\Modules' -Resolve
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon.Security' -Resolve) `
+              -Function @('Get-CPrivilege', 'Grant-CPrivilege', 'Revoke-CPrivilege')
 
 function Get-TargetResource
 {
@@ -35,7 +37,7 @@ function Get-TargetResource
 
     Set-StrictMode -Version 'Latest'
 
-    [string[]]$currentPrivileges = Get-CPrivilege -Identity $Identity -NoWarn
+    [string[]]$currentPrivileges = Get-CPrivilege -Identity $Identity
     $Ensure = 'Present'
     if( -not $currentPrivileges )
     {
@@ -192,17 +194,17 @@ function Set-TargetResource
 
     Set-StrictMode -Version 'Latest'
 
-    $currentPrivileges = Get-CPrivilege -Identity $Identity -NoWarn
+    $currentPrivileges = Get-CPrivilege -Identity $Identity
     if( $currentPrivileges )
     {
         Write-Verbose ('Revoking ''{0}'' privileges: {1}' -f $Identity,($currentPrivileges -join ','))
-        Revoke-CPrivilege -Identity $Identity -Privilege $currentPrivileges -NoWarn
+        Revoke-CPrivilege -Identity $Identity -Privilege $currentPrivileges
     }
 
     if( $Ensure -eq 'Present' -and $Privilege )
     {
         Write-Verbose ('Granting ''{0}'' privileges: {1}' -f $Identity,($Privilege -join ','))
-        Grant-CPrivilege -Identity $Identity -Privilege $Privilege -NoWarn
+        Grant-CPrivilege -Identity $Identity -Privilege $Privilege
     }
 }
 

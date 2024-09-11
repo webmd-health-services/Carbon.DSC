@@ -7,34 +7,37 @@ The `Start-CarbonTest.ps1` script makes sure that Carbon can be loaded automatic
 
 Run `Complete-CarbonTest.ps1` to reverse the changes this script makes.
 #>
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 [CmdletBinding()]
 param(
 )
 
-#Requires -Version 4
+#Requires -Version 5.1
 Set-StrictMode -Version 'Latest'
 
-& (Join-Path -Path $PSScriptRoot -ChildPath 'Carbon\Import-Carbon.ps1' -Resolve)
+Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath 'Carbon.DSC' -Resolve) `
+              -Function @('Clear-CDscLocalResourceCache') `
+              -Verbose:$false
+
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath 'Carbon.DSC\Modules' -Resolve
+
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+              -Function @('Get-CCimInstance', 'Get-CPowerShellModuleInstallPath', 'Install-CJunction') `
+              -Verbose:$false
+
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath 'PSModules' -Resolve
+
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon.FileSystem' -Resolve) `
+              -Function @('Grant-CNtfsPermission') `
+              -Verbose:$false
 
 $installRoot = Get-CPowerShellModuleInstallPath
-$carbonModuleRoot = Join-Path -Path $installRoot -ChildPath 'Carbon'
-Install-CJunction -Link $carbonModuleRoot -Target (Join-Path -Path $PSScriptRoot -ChildPath 'Carbon' -Resolve) #| Format-Table | Out-String | Write-Verbose
+$carbonModuleRoot = Join-Path -Path $installRoot -ChildPath 'Carbon.DSC'
+Install-CJunction -Link $carbonModuleRoot -Target (Join-Path -Path $PSScriptRoot -ChildPath 'Carbon.DSC' -Resolve)
 
 if( (Test-Path -Path 'env:APPVEYOR') )
 {
-    Grant-Permission -Path ($PSScriptRoot | Split-Path) -Identity 'Everyone' -Permission 'FullControl' -NoWarn
-    Grant-Permission -Path ('C:\Users\appveyor\Documents') -Identity 'Everyone' -Permission 'FullControl' -NoWarn
+    Grant-CNtfsPermission -Path ($PSScriptRoot | Split-Path) -Identity 'Everyone' -Permission 'FullControl'
+    Grant-CNtfsPermission -Path ('C:\Users\appveyor\Documents') -Identity 'Everyone' -Permission 'FullControl'
 
     $wmiprvse = Get-Process -Name 'wmiprvse'
     #$wmiprvse | Format-Table
