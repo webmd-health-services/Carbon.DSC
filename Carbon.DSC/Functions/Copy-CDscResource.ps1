@@ -7,9 +7,9 @@ function Copy-CDscResource
 
     .DESCRIPTION
     This function copies a DSC resource or a directory of DSC resources to a DSC pull server share/website. All files under `$Path` are copied.
-    
+
     DSC requires all files have a checksum file (e.g. `localhost.mof.checksum`), which this function generates for you (in a temporary location).
-    
+
     Only new files, or files whose checksums have changed, are copied. You can force all files to be copied with the `Force` switch.
 
     `Copy-CDscResource` is new in Carbon 2.0.
@@ -43,24 +43,24 @@ function Copy-CDscResource
     [OutputType([IO.FileInfo])]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The path to the DSC resource to copy. If a directory is given, all files in that directory are copied. Wildcards supported.
         $Path,
 
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The directory where the resources should be copied.
         $Destination,
 
-        [Switch]
+        [switch]
         # Recursively copy files from the source directory.
         $Recurse,
 
-        [Switch]
+        [switch]
         # Returns `IO.FileInfo` objects for each item copied to `Destination`.
         $PassThru,
 
-        [Switch]
+        [switch]
         # Copy resources, even if they are the same on the destination server.
         $Force
     )

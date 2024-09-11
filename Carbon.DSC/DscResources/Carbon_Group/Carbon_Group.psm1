@@ -100,20 +100,20 @@ function Set-TargetResource
         }
 
     #>
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The name of the group.
         $Name,
 
-        [string]
+        [String]
         # A description of the group. Only used when adding/updating a group (i.e. when `Ensure` is `Present`).
         $Description,
 
         [ValidateSet("Present","Absent")]
-        [string]
+        [String]
         # Should be either `Present` or `Absent`. If set to `Present`, a group is configured and membership configured. If set to `Absent`, the group is removed.
         $Ensure,
 
@@ -177,14 +177,14 @@ function Test-TargetResource
     param
     (
         [parameter(Mandatory = $true)]
-        [string]
+        [String]
         $Name,
 
-        [string]
+        [String]
         $Description = $null,
 
         [ValidateSet("Present","Absent")]
-        [string]
+        [String]
         $Ensure = "Present",
 
         [string[]]
@@ -257,8 +257,8 @@ function Test-TargetResource
 function Resolve-MemberName
 {
     param(
-        [Parameter(Mandatory=$true,VAlueFromPipeline=$true)]
-        [string]
+        [Parameter(Mandatory, VAlueFromPipeline=$true)]
+        [String]
         $Name
     )
 
@@ -271,7 +271,7 @@ function Resolve-MemberName
 function Resolve-PrincipalName
 {
     param(
-        [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+        [Parameter(Mandatory, ValueFromPipeline=$true)]
         $Principal
     )
 

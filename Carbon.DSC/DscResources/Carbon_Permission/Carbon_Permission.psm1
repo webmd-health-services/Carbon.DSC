@@ -18,12 +18,12 @@ function Get-TargetResource
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The path on which the permissions should be granted.  Can be a file system or registry path.
         $Path,
 
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The user or group getting the permissions.
         $Identity,
 
@@ -33,7 +33,7 @@ function Get-TargetResource
         $Permission,
 
         [ValidateSet('Container','SubContainers','ContainerAndSubContainers','Leaves','ContainerAndLeaves','SubContainersAndLeaves','ContainerAndSubContainersAndLeaves','ChildContainers','ContainerAndChildContainers','ChildLeaves','ContainerAndChildLeaves','ChildContainersAndChildLeaves','ContainerAndChildContainersAndChildLeaves')]
-        [string]
+        [String]
         # How to apply container permissions.  This controls the inheritance and propagation flags.  Default is full inheritance, e.g. `ContainersAndSubContainersAndLeaves`. This parameter is ignored if `Path` is to a leaf item.
         $ApplyTo,
 
@@ -41,7 +41,7 @@ function Get-TargetResource
         $Append,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # Should the user exist or not exist?
         $Ensure = 'Present'
     )
@@ -258,12 +258,12 @@ function Set-TargetResource
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The path on which the permissions should be granted.  Can be a file system, registry path, or certificate path.
         $Path,
 
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The user or group getting the permissions.
         $Identity,
 
@@ -273,7 +273,7 @@ function Set-TargetResource
         $Permission,
 
         [ValidateSet('Container','SubContainers','ContainerAndSubContainers','Leaves','ContainerAndLeaves','SubContainersAndLeaves','ContainerAndSubContainersAndLeaves','ChildContainers','ContainerAndChildContainers','ChildLeaves','ContainerAndChildLeaves','ChildContainersAndChildLeaves','ContainerAndChildContainersAndChildLeaves')]
-        [string]
+        [String]
         # How to apply container permissions.  This controls the inheritance and propagation flags.  Default is full inheritance, e.g. `ContainersAndSubContainersAndLeaves`. This parameter is only used when `Path` is a directory or registry key. Valid values are `Container`, `SubContainers`, `ContainerAndSubContainers`, `Leaves`, `ContainerAndLeaves`, `SubContainersAndLeaves`, `ContainerAndSubContainersAndLeaves`, `ChildContainers`, `ContainerAndChildContainers`, `ChildLeaves`, `ContainerAndChildLeaves`, `ChildContainersAndChildLeaves`, `ContainerAndChildContainersAndChildLeaves`.
         $ApplyTo,
 
@@ -284,7 +284,7 @@ function Set-TargetResource
         $Append,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # If set to `Present`, permissions are set. If `Absent`, all permissions to `$Path` removed.
         $Ensure = 'Present'
     )
@@ -318,16 +318,16 @@ function Set-TargetResource
 
 function Test-TargetResource
 {
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([bool])]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The path on which the permissions should be granted.  Can be a file system or registry path.
         $Path,
 
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The user or group getting the permissions.
         $Identity,
 
@@ -337,7 +337,7 @@ function Test-TargetResource
         $Permission,
 
         [ValidateSet('Container','SubContainers','ContainerAndSubContainers','Leaves','ContainerAndLeaves','SubContainersAndLeaves','ContainerAndSubContainersAndLeaves','ChildContainers','ContainerAndChildContainers','ChildLeaves','ContainerAndChildLeaves','ChildContainersAndChildLeaves','ContainerAndChildContainersAndChildLeaves')]
-        [string]
+        [String]
         # How to apply container permissions.  This controls the inheritance and propagation flags.  Default is full inheritance, e.g. `ContainersAndSubContainersAndLeaves`. This parameter is ignored if `Path` is to a leaf item.
         $ApplyTo,
 
@@ -345,7 +345,7 @@ function Test-TargetResource
         $Append,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # Should the user exist or not exist?
         $Ensure = 'Present'
     )

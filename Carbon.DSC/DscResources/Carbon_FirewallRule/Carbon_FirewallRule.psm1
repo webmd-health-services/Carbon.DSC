@@ -18,62 +18,62 @@ function Get-TargetResource
     [OutputType([Hashtable])]
     param (
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         $Name,
 
         [bool]
         $Enabled = $true,
 
         [ValidateSet('In','Out')]
-        [string]
+        [String]
         $Direction,
 
         [ValidateSet('Any','Domain','Private','Public')]
         [string[]]
         $Profile = @( 'Any' ),
 
-        [string]
+        [String]
         $LocalIPAddress = 'Any',
 
-        [string]
+        [String]
         $LocalPort,
 
-        [string]
+        [String]
         $RemoteIPAddress = 'Any',
 
-        [string]
+        [String]
         $RemotePort,
 
-        [string]
+        [String]
         $Protocol = 'Any',
 
         [ValidateSet('Yes', 'No', 'DeferUser','DeferApp')]
-        [string]
+        [String]
         $EdgeTraversalPolicy = 'No',
 
         [ValidateSet('Allow','Block','Bypass')]
-        [string]
+        [String]
         $Action,
 
         [ValidateSet('Any','Wireless','LAN','RAS')]
-        [string]
+        [String]
         $InterfaceType = 'Any',
 
         [ValidateSet('NotRequired','Authenticate','AuthEnc','AuthDynEnc','AuthNoEncap')]
-        [string]
+        [String]
         $Security = 'NotRequired',
 
-        [string]
+        [String]
         $Description,
 
-        [string]
+        [String]
         $Program,
 
-        [string]
+        [String]
         $Service,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         $Ensure = 'Present'
     )
 
@@ -190,7 +190,7 @@ function Set-TargetResource
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The name of the rule.
         $Name,
 
@@ -199,7 +199,7 @@ function Set-TargetResource
         $Enabled = $true,
 
         [ValidateSet('In','Out')]
-        [string]
+        [String]
         # If set to `In`, the rule applies to inbound network traffic. If set to `Out`, the rule applies to outbound traffic.
         $Direction,
 
@@ -208,60 +208,60 @@ function Set-TargetResource
         # Specifies the profile(s) to which the firewall rule is assigned. The rule is active on the local computer only when the specified profile is currently active. Valid values are `Any`, `Domain`, `Public`, and `Private`.
         $Profile,
 
-        [string]
+        [String]
         # The local IP addresses the rule applies to. Valid values are `any`, an exact IPv4 or IPv6 address, a subnet mask (e.g. 192.168.0.0/24), or a range. Separate each value with a comma; no spaces.
         $LocalIPAddress,
 
-        [string]
+        [String]
         # The local port the rule applies to. Valid values are a specific port number, a range of port numbers (e.g. `5000-5010`), a comma-separate list of numbers and ranges, `any`, `rpc`, `rpc-epmap`, `Teredo`, and `iphttps`.
         $LocalPort,
 
-        [string]
+        [String]
         # The remote IP addresses the rules applies to. Valid values are `any`, an exact IPv4 or IPv6 address, a subnet mask (e.g. 192.168.0.0/24), or a range. Separate each value with a comma; no spaces.
         $RemoteIPAddress,
 
-        [string]
+        [String]
         # The remote port the rule applies to. Valid values are a specific port number, a range of port numbers (e.g. `5000-5010`), a comma-separate list of numbers and ranges, `any`, `rpc`, `rpc-epmap`, `Teredo`, and `iphttps`.
         $RemotePort,
 
-        [string]
+        [String]
         # The protocol the rule applies to. Valid values are `any`, the protocol number, `icmpv4`, `icmpv6', `icmpv4:type,code`, `icmpv6:type,code`, `tcp`, or `udp`. Separate multiple values with a comma; no spaces.
         $Protocol,
 
         [ValidateSet('Yes', 'No', 'DeferUser','DeferApp')]
-        [string]
+        [String]
         # For inbound rules, specifies that traffic that traverses an edge device, such as a Network Address Translation (NAT) enabled router, between the local and remote computer matches this rule. Valid values are `any`, `deferapp`, `deferuse`, or `no`.
         $EdgeTraversalPolicy,
 
         [ValidateSet('Allow','Block','Bypass')]
-        [string]
+        [String]
         # Specifies what to do when packets match the rule. Valid values are `Allow`, `Block`, or `Bypass`.
         $Action,
 
         [ValidateSet('Any','Wireless','LAN','RAS')]
-        [string]
+        [String]
         # Specifies that only network packets passing through the indicated interface types match this rule. Valid values are `Any`, `Wireless`, `LAN`, or `RAS`.
         $InterfaceType,
 
         [ValidateSet('NotRequired','Authenticate','AuthEnc','AuthDynEnc','AuthNoEncap')]
-        [string]
+        [String]
         # Specifies that only network packets protected with the specified type of IPsec options match this rule. Valid values are `NotRequired`, `Authenticate`, `AuthEnc`, `AuthDynEnc`, or `AuthNoEncap`.
         $Security,
 
-        [string]
+        [String]
         # A description of the rule.
         $Description,
 
-        [string]
+        [String]
         # Specifies that network traffic generated by the identified executable program matches this rule.
         $Program,
 
-        [string]
+        [String]
         # Specifies that traffic generated by the identified service matches this rule. The ServiceShortName for a service can be found in Services MMC snap-in, by right-clicking the service, selecting Properties, and examining Service Name.
         $Service,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # Set to `Present` to create the fireall rule. Set to `Absent` to delete it.
         $Ensure = 'Present'
     )
@@ -318,7 +318,7 @@ function Set-TargetResource
                     'EdgeTraversalPolicy' = 'edge';
               }
 
-    $netshArgs = New-Object 'Collections.Generic.List[string]'
+    $netshArgs = New-Object 'Collections.Generic.List[String]'
     $resource.Keys |
         Where-Object { $_ -ne 'Ensure' -and $_ -ne 'Name' } |
         Where-Object { $PSBoundParameters.ContainsKey($_) } |
@@ -359,62 +359,62 @@ function Test-TargetResource
     [OutputType([bool])]
     param (
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         $Name,
 
         [bool]
         $Enabled,
 
         [ValidateSet('In','Out')]
-        [string]
+        [String]
         $Direction,
 
         [ValidateSet('Any','Domain','Private','Public')]
         [string[]]
         $Profile,
 
-        [string]
+        [String]
         $LocalIPAddress,
 
-        [string]
+        [String]
         $LocalPort,
 
-        [string]
+        [String]
         $RemoteIPAddress,
 
-        [string]
+        [String]
         $RemotePort,
 
-        [string]
+        [String]
         $Protocol,
 
         [ValidateSet('Yes', 'No', 'DeferUser','DeferApp')]
-        [string]
+        [String]
         $EdgeTraversalPolicy,
 
         [ValidateSet('Allow','Block','Bypass')]
-        [string]
+        [String]
         $Action,
 
         [ValidateSet('Any','Wireless','LAN','RAS')]
-        [string]
+        [String]
         $InterfaceType,
 
         [ValidateSet('NotRequired','Authenticate','AuthEnc','AuthDynEnc','AuthNoEncap')]
-        [string]
+        [String]
         $Security,
 
-        [string]
+        [String]
         $Description,
 
-        [string]
+        [String]
         $Program,
 
-        [string]
+        [String]
         $Service,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         $Ensure = 'Present'
     )
 

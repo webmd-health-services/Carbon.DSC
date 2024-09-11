@@ -19,20 +19,20 @@ function Get-TargetResource
 	param
 	(
 		[Parameter(Mandatory=$true)]
-		[string]
+		[String]
         # The name of the environment variable.
 		$Name,
 
-		[string]
-        # the value of the environment variable.        
+		[String]
+        # the value of the environment variable.
 		$Value,
 
 		[ValidateSet("Present","Absent")]
-		[string]
+		[String]
         # Create or delete the resource?
 		$Ensure = 'Present'
 	)
-    
+
     Set-StrictMode -Version 'Latest'
 
     $actualValue = [Environment]::GetEnvironmentVariable($Name,[EnvironmentVariableTarget]::Machine)
@@ -66,7 +66,7 @@ function Set-TargetResource
     Set-CEnvironmentVariable
 
     .EXAMPLE
-    > 
+    >
     Demonstrates how to create or update an environment variable:
 
         Carbon_EnvironmentVariable SetCarbonEnv
@@ -79,7 +79,7 @@ function Set-TargetResource
     .EXAMPLE
     >
     Demonstrates how to remove an environment variable.
-        
+
         Carbon_EnvironmentVariable RemoveCarbonEnv
         {
             Name = 'CARBON_ENV';
@@ -91,16 +91,16 @@ function Set-TargetResource
 	param
 	(
 		[parameter(Mandatory = $true)]
-		[string]
+		[String]
         # The name of the environment variable.
 		$Name,
 
-		[string]
+		[String]
         # The value of the environment variable.
 		$Value,
 
 		[ValidateSet("Present","Absent")]
-		[string]
+		[String]
         # Set to `Present` to create the environment variable. Set to `Absent` to delete it.
 		$Ensure = 'Present'
 	)
@@ -168,7 +168,7 @@ function Test-TargetResource
         }
         else
         {
-            Write-Verbose ('{0}: has a value' -f $Name) 
+            Write-Verbose ('{0}: has a value' -f $Name)
         }
         return $result
     }

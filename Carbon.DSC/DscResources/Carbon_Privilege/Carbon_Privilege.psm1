@@ -14,11 +14,11 @@
 
 function Get-TargetResource
 {
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The identity of the principal whose privileges to get.
         $Identity,
 
@@ -28,7 +28,7 @@ function Get-TargetResource
         $Privilege = @(),
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # Should the user exist or not exist?
         $Ensure = 'Present'
     )
@@ -172,10 +172,10 @@ function Set-TargetResource
             Ensure = 'Absent'
         }
     #>
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The identity of the principal whose privileges to set.
         $Identity,
 
@@ -185,7 +185,7 @@ function Set-TargetResource
         $Privilege = @(),
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # Should the user exist or not exist?
         $Ensure = 'Present'
     )
@@ -209,11 +209,11 @@ function Set-TargetResource
 
 function Test-TargetResource
 {
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([bool])]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The identity of the principal whose privileges to test.
         $Identity,
 
@@ -223,7 +223,7 @@ function Test-TargetResource
         $Privilege = @(),
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # Should the user exist or not exist?
         $Ensure = 'Present'
     )

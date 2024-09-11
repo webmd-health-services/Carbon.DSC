@@ -40,7 +40,7 @@ Describe 'Carbon_Service' {
             # Some services can't be retrieved di-rectly.
             Where-Object 'Name' -NotIn @('lltdsvc', 'lltdio', 'McpManagementService') |
             Where-Object { (Get-Service -Name $_.Name -ErrorAction Ignore) } |
-            Where-Object { (-Not [string]::IsNullOrWhitespace($_.Name)) } |
+            Where-Object { (-Not [String]::IsNullOrWhitespace($_.Name)) } |
             Select-Object -First 1 |
             ForEach-Object {
                 Write-Verbose -Message ($_.Name) -Verbose

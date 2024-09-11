@@ -47,13 +47,13 @@ function Start-CDscPullConfiguration
     #>
     [CmdletBinding(DefaultParameterSetName='WithCredentials')]
     param(
-        [Parameter(Mandatory=$true,ParameterSetName='WithCredentials')]
+        [Parameter(Mandatory, ParameterSetName='WithCredentials')]
         [string[]]
         # The credential to use when connecting to the target computer.
         $ComputerName,
 
         [Parameter(ParameterSetName='WithCredentials')]
-        [PSCredential]
+        [pscredential]
         # The credentials to use when connecting to the computers.
         $Credential,
 
@@ -110,7 +110,7 @@ function Start-CDscPullConfiguration
     # Get rid of any _tmp directories you might find out there.
     Invoke-Command -ComputerName $CimSession.ComputerName @credentialParam -ScriptBlock {
         $modulesRoot = Join-Path -Path $env:ProgramFiles -ChildPath 'WindowsPowerShell\Modules'
-        Get-ChildItem -Path $modulesRoot -Filter '*_tmp' -Directory | 
+        Get-ChildItem -Path $modulesRoot -Filter '*_tmp' -Directory |
             Remove-Item -Recurse
     }
 
@@ -123,9 +123,9 @@ function Start-CDscPullConfiguration
                 $ModuleName
             )
 
-            $dscProcessID = Get-CCimInstance -Class 'msft_providers' | 
-                                Where-Object {$_.provider -like 'dsccore'} | 
-                                Select-Object -ExpandProperty HostProcessIdentifier 
+            $dscProcessID = Get-CCimInstance -Class 'msft_providers' |
+                                Where-Object {$_.provider -like 'dsccore'} |
+                                Select-Object -ExpandProperty HostProcessIdentifier
             Stop-Process -Id $dscProcessID -Force
 
             $modulesRoot = Join-Path -Path $env:ProgramFiles -ChildPath 'WindowsPowerShell\Modules'
@@ -143,17 +143,17 @@ function Start-CDscPullConfiguration
                                 -Namespace 'root/microsoft/windows/desiredstateconfiguration' `
                                 -Class 'MSFT_DscLocalConfigurationManager' `
                                 -MethodName 'PerformRequiredConfigurationChecks' `
-                                -Arguments @{ 'Flags' = [uint32]1 } 
+                                -Arguments @{ 'Flags' = [uint32]1 }
 
     $successfulComputers = $results | Where-Object { $_ -and $_.ReturnValue -eq 0 } | Select-Object -ExpandProperty 'PSComputerName'
 
-    $CimSession | 
+    $CimSession |
         Where-Object { $successfulComputers -notcontains $_.ComputerName } |
-        ForEach-Object { 
+        ForEach-Object {
             $session = $_
             $startedAt= $win32OS | Where-Object { $_.PSComputerName -eq $session.ComputerName } | Select-Object -ExpandProperty 'LocalDateTime'
-            Get-CDscError -ComputerName $session.ComputerName -StartTime $startedAt -Wait 
-        } | 
+            Get-CDscError -ComputerName $session.ComputerName -StartTime $startedAt -Wait
+        } |
         Write-CDscError
 }
 

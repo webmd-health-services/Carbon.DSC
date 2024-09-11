@@ -88,8 +88,8 @@ function Get-CDscWinEvent
         # Get errors that occurred before this date/time.
         $EndTime,
 
-        [Parameter(Mandatory=$true,ParameterSetName='Wait')]
-        [Switch]
+        [Parameter(Mandatory, ParameterSetName='Wait')]
+        [switch]
         # Wait for entries to appear, as it can sometimes take several seconds for entries to get written to the event log.
         $Wait,
 
@@ -103,8 +103,8 @@ function Get-CDscWinEvent
 
     Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
 
-    $filter = @{ 
-                    LogName = 'Microsoft-Windows-DSC/Operational'; 
+    $filter = @{
+                    LogName = 'Microsoft-Windows-DSC/Operational';
               }
 
     if( $ID )
@@ -130,7 +130,7 @@ function Get-CDscWinEvent
     function Invoke-GetWinEvent
     {
         param(
-            [string]
+            [String]
             $ComputerName
         )
 
@@ -178,8 +178,8 @@ function Get-CDscWinEvent
 
     if( $ComputerName )
     {
-        $ComputerName = $ComputerName | 
-                            Where-Object { 
+        $ComputerName = $ComputerName |
+                            Where-Object {
                                 # Get just the computers that exist.
                                 if( (Test-Connection -ComputerName $ComputerName -Quiet) )
                                 {

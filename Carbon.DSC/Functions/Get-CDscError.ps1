@@ -69,8 +69,8 @@ function Get-CDscError
         # Get errors that occurred before this date/time.
         $EndTime,
 
-        [Parameter(Mandatory=$true,ParameterSetName='Wait')]
-        [Switch]
+        [Parameter(Mandatory, ParameterSetName='Wait')]
+        [switch]
         # Wait for entries to appear, as it can sometimes take several seconds for entries to get written to the event log.
         $Wait,
 

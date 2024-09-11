@@ -19,7 +19,7 @@ function Start-CarbonDscTestFixture
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, Position=0)]
-        [string] $DscResourceName
+        [String] $DscResourceName
     )
 
     Set-StrictMode -Version 'Latest'
@@ -92,7 +92,7 @@ function Invoke-CarbonTestDscConfiguration
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         $Name
     )
 

@@ -24,7 +24,7 @@ BeforeAll {
             [Parameter(Position=0)]
             $Value,
 
-            [Switch]
+            [switch]
             $CaseSensitive = $false
         )
 

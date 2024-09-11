@@ -19,37 +19,37 @@ function Get-TargetResource
 	param
 	(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The path to the file to update.
         $Path,
 
-        [string]
+        [String]
         # The section of the INI file where the setting can be found.
         $Section,
 
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The name of the INI setting.
         $Name,
 
-        [string]
-        # The value of the INI setting.        
+        [String]
+        # The value of the INI setting.
         $Value,
 
-        [Switch]
+        [switch]
         # The INI file being modified is case-sensitive.
         $CaseSensitive,
 
-        [Switch]
+        [switch]
         # If `$true`, creates the INI file if it doesn't exist.
         $Force,
 
         [ValidateSet("Present","Absent")]
-        [string]
+        [String]
         # Create or delete the INI setting?
         $Ensure = 'Present'
 	)
-    
+
     Set-StrictMode -Version 'Latest'
 
     $ini = @{ }
@@ -65,13 +65,13 @@ function Get-TargetResource
             return
         }
     }
-    
+
     $key = $Name
     if( $Section )
     {
         $key = '{0}.{1}' -f $Section,$Name
     }
-    
+
     $currentValue = $null
     $Ensure = 'Absent'
     if( $ini.ContainsKey( $key ) )
@@ -79,7 +79,7 @@ function Get-TargetResource
         $currentValue = $ini[$key].Value
         $Ensure = 'Present';
     }
-    
+
     @{
         Path = $Path;
         Section = $Section;
@@ -175,37 +175,37 @@ function Set-TargetResource
 	param
 	(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The path to the file to update.
         $Path,
 
-        [string]
+        [String]
         # The section of the INI file where the setting can be found.
         $Section,
 
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The name of the INI setting.
         $Name,
 
-        [string]
-        # The value of the INI setting.        
+        [String]
+        # The value of the INI setting.
         $Value,
 
-        [Switch]
+        [switch]
         # The INI file being modified is case-sensitive.
         $CaseSensitive,
 
-        [Switch]
+        [switch]
         # If `$true`, creates the INI file if it doesn't exist.
         $Force,
 
         [ValidateSet("Present","Absent")]
-        [string]
+        [String]
         # Create or delete the INI setting?
         $Ensure = 'Present'
 	)
-    
+
     Set-StrictMode -Version 'Latest'
 
     $resource = Get-TargetResource -Path $Path -Section $Section -Name $Name -Force:$Force -CaseSensitive:$CaseSensitive
@@ -246,37 +246,37 @@ function Test-TargetResource
 	param
 	(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The path to the file to update.
         $Path,
 
-        [string]
+        [String]
         # The section of the INI file where the setting can be found.
         $Section,
 
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The name of the INI setting.
         $Name,
 
-        [string]
-        # The value of the INI setting.        
+        [String]
+        # The value of the INI setting.
         $Value,
 
-        [Switch]
+        [switch]
         # The INI file being modified is case-sensitive.
         $CaseSensitive,
 
-        [Switch]
+        [switch]
         # If `$true`, creates the INI file if it doesn't exist.
         $Force,
 
         [ValidateSet("Present","Absent")]
-        [string]
+        [String]
         # Create or delete the INI setting?
         $Ensure = 'Present'
 	)
-    
+
     Set-StrictMode -Version 'Latest'
 
     $resource = Get-TargetResource -Path $Path -Section $Section -Name $Name -Force:$Force
@@ -313,7 +313,7 @@ function Test-TargetResource
         $result = ($resource.Ensure -eq 'Absent')
         if( $result )
         {
-            Write-Verbose ('{0}: {1}: not found' -f $Path,$fullName) 
+            Write-Verbose ('{0}: {1}: not found' -f $Path,$fullName)
         }
         else
         {

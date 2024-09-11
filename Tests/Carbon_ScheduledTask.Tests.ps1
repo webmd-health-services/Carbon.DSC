@@ -68,7 +68,7 @@ Describe 'Carbon_ScheduledTask' {
                 $comTask = $expectedXml = Get-CScheduledTask -Name $_.Path -AsComObject -NoWarn
                 $expectedXml = $comTask.Xml
 
-                [string]$expectedCredential =
+                [String]$expectedCredential =
                     & {
                         $_.Definition.Principal.UserId
                         $_.Definition.Principal.GroupId

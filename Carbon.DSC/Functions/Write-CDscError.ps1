@@ -24,12 +24,12 @@ function Write-CDscError
     [CmdletBinding()]
     [OutputType([Diagnostics.Eventing.Reader.EventLogRecord])]
     param(
-        [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+        [Parameter(Mandatory, ValueFromPipeline=$true)]
         [Diagnostics.Eventing.Reader.EventLogRecord[]]
         # The error record to write out as an error.
         $EventLogRecord,
 
-        [Switch]
+        [switch]
         # Return the event log record after writing an error.
         $PassThru
     )

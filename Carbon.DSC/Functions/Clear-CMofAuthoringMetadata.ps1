@@ -21,7 +21,7 @@ function Clear-CMofAuthoringMetadata
 
         /* ...snip... */
 
-        
+
         instance of OMI_ConfigurationDocument
         {
          Version="1.0.0";
@@ -37,7 +37,7 @@ function Clear-CMofAuthoringMetadata
         */
 
         /* ...snip... */
-        
+
         instance of OMI_ConfigurationDocument
         {
          Version="1.0.0";
@@ -56,10 +56,10 @@ function Clear-CMofAuthoringMetadata
 
     Demonstrates how to clear the authoring data from all .mof files in a specific directory.
     #>
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The path to the file/directory whose .mof files should be operated on.
         $Path
     )
@@ -133,7 +133,7 @@ function Clear-CMofAuthoringMetadata
 
                 return $true
 
-            } | 
+            } |
             Set-Content -Path $item.FullName
     }
 }

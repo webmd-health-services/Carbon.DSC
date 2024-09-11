@@ -18,20 +18,20 @@ function Get-TargetResource
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The name of the service.
         $Name,
 
-        [string]
+        [String]
         # The path to the service.
         $Path,
 
         [ValidateSet('Automatic','Manual','Disabled')]
-        [string]
+        [String]
         # The startup type: automatic, manual, or disabled.  Default is automatic.
         $StartupType,
 
-        [Switch]
+        [switch]
         $Delayed,
 
         [Carbon.Service.FailureAction]
@@ -62,7 +62,7 @@ function Get-TargetResource
         # What other services does this service depend on?
         $Dependency,
 
-        [string]
+        [String]
         # The command to run when a service fails, including path to the command and arguments.
         $Command,
 
@@ -70,16 +70,16 @@ function Get-TargetResource
         # How many milliseconds to wait before running the failure command. Default is 0, or immediately.
         $RunCommandDelay,
 
-        [string]
+        [String]
         # The service's display names.
         $DisplayName,
 
-        [string]
+        [String]
         # The service's description.
         $Description,
 
         [ValidateSet("LocalSystem", "LocalService", "NetworkService")]
-        [string]
+        [String]
         # The system account the service should run as.
         $UserName,
 
@@ -92,7 +92,7 @@ function Get-TargetResource
         $ArgumentList,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # If `Present`, the service is installed/updated. If `Absent`, the service is removed.
         $Ensure = 'Present'
     )
@@ -236,20 +236,20 @@ function Set-TargetResource
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The name of the service.
         $Name,
 
-        [string]
+        [String]
         # The path to the service.
         $Path,
 
         [ValidateSet('Automatic','Manual','Disabled')]
-        [string]
+        [String]
         # The startup type: automatic, manual, or disabled.  Default is automatic.
         $StartupType,
 
-        [Switch]
+        [switch]
         # Used in combination with the `StartupType` parameter to set a service's startup type to `Automatic (Delayed)`.
         #
         # If `Delayed` is true true, and `StartupType` is `Automatic` sets the service's startup type to `Automatic (Delayed)`.
@@ -289,7 +289,7 @@ function Set-TargetResource
         # What other services does this service depend on?
         $Dependency,
 
-        [string]
+        [String]
         # The command to run when a service fails, including path to the command and arguments.
         $Command,
 
@@ -297,16 +297,16 @@ function Set-TargetResource
         # How many milliseconds to wait before running the failure command. Default is 0, or immediately.
         $RunCommandDelay,
 
-        [string]
+        [String]
         # The service's display names.
         $DisplayName,
 
-        [string]
+        [String]
         # The service's description.
         $Description,
 
         [ValidateSet("LocalSystem", "LocalService", "NetworkService")]
-        [string]
+        [String]
         # The system account the service should run as.
         $UserName,
 
@@ -319,7 +319,7 @@ function Set-TargetResource
         $ArgumentList,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # If `Present`, the service is installed/updated. If `Absent`, the service is removed.
         $Ensure = 'Present'
     )
@@ -365,24 +365,24 @@ function Set-TargetResource
 
 function Test-TargetResource
 {
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([bool])]
     param(
         [Parameter(Mandatory=$true)]
-        [string]
+        [String]
         # The name of the service.
         $Name,
 
-        [string]
+        [String]
         # The path to the service.
         $Path,
 
         [ValidateSet('Automatic','Manual','Disabled')]
-        [string]
+        [String]
         # The startup type: automatic, manual, or disabled.  Default is automatic.
         $StartupType,
 
-        [Switch]
+        [switch]
         $Delayed,
 
         [Carbon.Service.FailureAction]
@@ -413,7 +413,7 @@ function Test-TargetResource
         # What other services does this service depend on?
         $Dependency,
 
-        [string]
+        [String]
         # The command to run when a service fails, including path to the command and arguments.
         $Command,
 
@@ -421,16 +421,16 @@ function Test-TargetResource
         # How many milliseconds to wait before running the failure command. Default is 0, or immediately.
         $RunCommandDelay,
 
-        [string]
+        [String]
         # The service's display names.
         $DisplayName,
 
-        [string]
+        [String]
         # The service's description.
         $Description,
 
         [ValidateSet("LocalSystem", "LocalService", "NetworkService")]
-        [string]
+        [String]
         # The system account the service should run as.
         $UserName,
 
@@ -443,7 +443,7 @@ function Test-TargetResource
         $ArgumentList,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # If `Present`, the service is installed/updated. If `Absent`, the service is removed.
         $Ensure = 'Present'
     )

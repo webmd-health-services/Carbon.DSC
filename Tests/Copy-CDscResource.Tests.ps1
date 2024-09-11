@@ -1,9 +1,9 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ function Assert-Copy
 
         $DestinationRoot,
 
-        [Switch]
+        [switch]
         $Recurse
     )
 
@@ -60,26 +60,26 @@ function Assert-Copy
 }
 
 Describe 'Copy-DscResource' {
-    
+
     BeforeEach {
         $Global:Error.Clear()
         $script:destinationRoot = Join-Path -Path $TestDrive.FullName -ChildPath ('D.{0}' -f [IO.Path]::GetRandomFileName())
         New-Item -Path $destinationRoot -ItemType 'Directory'
         $script:sourceRoot = Join-Path -Path $TestDrive.FullName -ChildPath ('S.{0}' -f [IO.Path]::GetRandomFileName())
         New-Item -Path (Join-Path -Path $sourceRoot -ChildPath 'Dir1\Dir3\zip.zip') -Force
-        New-Item -Path (Join-Path -Path $sourceRoot -ChildPath 'Dir1\zip.zip') 
+        New-Item -Path (Join-Path -Path $sourceRoot -ChildPath 'Dir1\zip.zip')
         New-Item -Path (Join-Path -Path $sourceRoot -ChildPath 'Dir2') -ItemType 'Directory'
         New-Item -Path (Join-Path -Path $sourceRoot -ChildPath 'zip.zip')
         New-Item -Path (Join-Path -Path $sourceRoot -ChildPath 'mov.mof')
         New-Item -Path (Join-Path -Path $sourceRoot -ChildPath 'msi.msi')
     }
-    
+
     It 'should copy files' {
         $result = Copy-DscResource -Path $sourceRoot -Destination $destinationRoot
         $result | Should -BeNullOrEmpty
         Assert-Copy $sourceRoot $destinationRoot
     }
-    
+
     It 'should pass thru copied files' {
         $result = Copy-DscResource -Path $sourceRoot -Destination $destinationRoot -PassThru -Recurse
         $result | Should -Not -BeNullOrEmpty
@@ -90,7 +90,7 @@ Describe 'Copy-DscResource' {
             $item.FullName | Should -BeLike ('{0}*' -f $destinationRoot)
         }
     }
-    
+
     It 'should only copy changed files' {
         $result = Copy-DscResource -Path $sourceRoot -Destination $destinationRoot -PassThru
         $result | Should -Not -BeNullOrEmpty
@@ -103,7 +103,7 @@ Describe 'Copy-DscResource' {
         $result[0].Name | Should -Be 'mov.mof'
         $result[1].Name | Should -Be 'mov.mof.checksum'
     }
-    
+
     It 'should always regenerate checksums' {
         $result = Copy-DscResource -Path $sourceRoot -Destination $destinationRoot -PassThru
         $result | Should -Not -BeNullOrEmpty
@@ -113,7 +113,7 @@ Describe 'Copy-DscResource' {
             $result = Copy-DscResource -Path $sourceRoot -Destination $destinationRoot -PassThru
             $result | Should -BeNullOrEmpty
             [IO.File]::WriteAllText((Join-Path -Path $sourceRoot -ChildPath 'zip.zip'), ([Guid]::NewGuid().ToString()))
-    
+
             $result = Copy-DscResource -Path $sourceRoot -Destination $destinationRoot -PassThru
             $result | Should -Not -BeNullOrEmpty
             $result[0].Name | Should -Be 'zip.zip'
@@ -125,13 +125,13 @@ Describe 'Copy-DscResource' {
             Clear-Content -Path (Join-Path -Path $sourceRoot -ChildPath 'zip.zip')
         }
     }
-    
+
     It 'should copy recursively' {
         $result = Copy-DscResource -Path $sourceRoot -Destination $destinationRoot -Recurse
         $result | Should -BeNullOrEmpty
         Assert-Copy -SourceRoot $sourceRoot -Destination $destinationRoot -Recurse
     }
-    
+
     It 'should force copy' {
         $result = Copy-DscResource -Path $sourceRoot -Destination $destinationRoot -PassThru -Recurse
         $result | Should -Not -BeNullOrEmpty

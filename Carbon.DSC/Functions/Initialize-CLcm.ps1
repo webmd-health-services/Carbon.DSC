@@ -118,94 +118,90 @@ function Initialize-CLcm
     downloads new configuration and applies that configuration. In this case, new configuration is downloaded every 25
     minutes, and apllied every 75 minutes (`RefreshIntervalMinutes * ConfigurationFrequency`).
     #>
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
-        [Parameter(Mandatory=$true,ParameterSetName='Push')]
-        [Switch]
         # Configures the LCM to receive its configuration via pushes using `Start-DscConfiguration`.
-        $Push,
+        [Parameter(Mandatory, ParameterSetName='Push')]
+        [switch] $Push,
 
-        [Parameter(Mandatory=$true,ParameterSetName='PullWebDownloadManager')]
-        [string]
         # Configures the LCM to pull its configuration from a DSC website using the web download manager
-        $ServerUrl,
+        [Parameter(Mandatory, ParameterSetName='PullWebDownloadManager')]
+        [String] $ServerUrl,
 
+        # When using the web download manager, allow the `ServerUrl` to use an unsecured, http connection when
+        # contacting the DSC web pull server.
         [Parameter(ParameterSetName='PullWebDownloadManager')]
-        [Switch]
-        # When using the web download manager, allow the `ServerUrl` to use an unsecured, http connection when contacting the DSC web pull server.
-        $AllowUnsecureConnection,
+        [switch] $AllowUnsecureConnection,
 
-        [Parameter(Mandatory=$true,ParameterSetName='PullFileDownloadManager')]
-        [string]
-        # Configures the LCM to pull its configuration from an SMB share or directory. This is the path to the SMB share where resources can be found. Local paths are also allowed, e.g. `C:\DscResources`.
-        $SourcePath,
+        # Configures the LCM to pull its configuration from an SMB share or directory. This is the path to the SMB share
+        # where resources can be found. Local paths are also allowed, e.g. `C:\DscResources`.
+        [Parameter(Mandatory, ParameterSetName='PullFileDownloadManager')]
+        [String] $SourcePath,
 
-        [Parameter(Mandatory=$true,ParameterSetName='PullWebDownloadManager')]
-        [Parameter(Mandatory=$true,ParameterSetName='PullFileDownloadManager')]
-        [Guid]
-        # The GUID that identifies what configuration to pull to the computer. The Local Configuration Manager will look for a '$Guid.mof' file to pull.
-        $ConfigurationID,
+        # The GUID that identifies what configuration to pull to the computer. The Local Configuration Manager will look
+        # for a '$Guid.mof' file to pull.
+        [Parameter(Mandatory, ParameterSetName='PullWebDownloadManager')]
+        [Parameter(Mandatory, ParameterSetName='PullFileDownloadManager')]
+        [Guid] $ConfigurationID,
 
-        [Parameter(Mandatory=$true,ParameterSetName='PullWebDownloadManager')]
-        [Parameter(Mandatory=$true,ParameterSetName='PullFileDownloadManager')]
+        # Specifies how the Local Configuration Manager applies configuration to the target computer(s). It supports
+        # three values: `ApplyOnly`, `ApplyAndMonitor`, or `ApplyAndAutoCorrect`.
+        [Parameter(Mandatory, ParameterSetName='PullWebDownloadManager')]
+        [Parameter(Mandatory, ParameterSetName='PullFileDownloadManager')]
         [ValidateSet('ApplyOnly','ApplyAndMonitor','ApplyAndAutoCorrect')]
-        [string]
-        # Specifies how the Local Configuration Manager applies configuration to the target computer(s). It supports three values: `ApplyOnly`, `ApplyAndMonitor`, or `ApplyAndAutoCorrect`.
-        $ConfigurationMode,
+        [String] $ConfigurationMode,
 
-        [Parameter(Mandatory=$true)]
-        [string[]]
+        [Parameter(Mandatory)]
+        [String[]]
         # The computer(s) whose Local Configuration Manager to configure.
         $ComputerName,
 
-        [PSCredential]
+        [pscredential]
         # The credentials to use when connecting to the target computer(s).
         $Credential,
 
+        # Controls whether new configurations downloaded from the configuration server are allowed to overwrite the old
+        # ones on the target computer(s).
         [Parameter(ParameterSetName='PullWebDownloadManager')]
         [Parameter(ParameterSetName='PullFileDownloadManager')]
-        [Switch]
-        # Controls whether new configurations downloaded from the configuration server are allowed to overwrite the old ones on the target computer(s).
-        $AllowModuleOverwrite,
+        [switch] $AllowModuleOverwrite,
 
+        # The thumbprint of the certificate to use to decrypt secrets. If `CertFile` is given, this parameter is ignored
+        # in favor of the certificate in `CertFile`.
         [Alias('Thumbprint')]
-        [string]
-        # The thumbprint of the certificate to use to decrypt secrets. If `CertFile` is given, this parameter is ignored in favor of the certificate in `CertFile`.
-        $CertificateID = $null,
+        [String] $CertificateID = $null,
 
-        [string]
-        # The path to the certificate containing the private key to use when decrypting credentials. The certificate will be uploaded and installed for you.
-        $CertFile,
+        # The path to the certificate containing the private key to use when decrypting credentials. The certificate
+        # will be uploaded and installed for you.
+        [String] $CertFile,
 
-        [object]
         # The password for the certificate specified by `CertFile`. It can be a `string` or a `SecureString`.
-        $CertPassword,
+        [Object] $CertPassword,
 
-        [Alias('RebootNodeIfNeeded')]
-        [Switch]
         # Reboot the target computer(s) if needed.
-        $RebootIfNeeded,
+        [Alias('RebootNodeIfNeeded')]
+        [switch] $RebootIfNeeded,
 
+        # The interval (in minutes) at which the target computer(s) will contact the pull server to *download* its
+        # current configuration. The default (and minimum) interval is 15 minutes.
         [Parameter(ParameterSetName='PullWebDownloadManager')]
         [Parameter(ParameterSetName='PullFileDownloadManager')]
         [ValidateRange(30,[Int32]::MaxValue)]
         [Alias('RefreshFrequencyMinutes')]
-        [int]
-        # The interval (in minutes) at which the target computer(s) will contact the pull server to *download* its current configuration. The default (and minimum) interval is 15 minutes.
-        $RefreshIntervalMinutes = 30,
+        [int] $RefreshIntervalMinutes = 30,
 
+        # The frequency (in number of `RefreshIntervalMinutes`) at which the target computer will run/implement its
+        # current configuration. The default (and minimum) frequency is 2 refresh intervals. This value is multiplied by
+        # the `RefreshIntervalMinutes` parameter to calculate the interval in minutes that the configuration is applied.
         [Parameter(ParameterSetName='PullWebDownloadManager')]
         [Parameter(ParameterSetName='PullFileDownloadManager')]
         [ValidateRange(1,([int]([Int32]::MaxValue)))]
-        [int]
-        # The frequency (in number of `RefreshIntervalMinutes`) at which the target computer will run/implement its current configuration. The default (and minimum) frequency is 2 refresh intervals. This value is multiplied by the `RefreshIntervalMinutes` parameter to calculate the interval in minutes that the configuration is applied.
-        $ConfigurationFrequency = 1,
+        [int] $ConfigurationFrequency = 1,
 
+        # The credentials the Local Configuration Manager should use when contacting the pull server.
         [Parameter(ParameterSetName='PullWebDownloadManager')]
         [Parameter(ParameterSetName='PullFileDownloadManager')]
-        [PSCredential]
-        # The credentials the Local Configuration Manager should use when contacting the pull server.
-        $LcmCredential
+        [pscredential] $LcmCredential
     )
 
     Set-StrictMode -Version 'Latest'

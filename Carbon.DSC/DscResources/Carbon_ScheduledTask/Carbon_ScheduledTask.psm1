@@ -20,11 +20,11 @@ function Get-TargetResource
         [Parameter(Mandatory=$true)]
         [ValidateLength(1,238)]
         [Alias('TaskName')]
-        [string]
+        [String]
         # The name of the scheduled task to return. Wildcards supported. This must be the *full task name*, i.e. the task's path/location and its name.
         $Name,
 
-        [string]
+        [String]
         # Install the task from this XML.
         $TaskXml,
 
@@ -33,7 +33,7 @@ function Get-TargetResource
         $TaskCredential,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # If `Present`, the service is installed/updated. If `Absent`, the service is removed.
         $Ensure = 'Present'
     )
@@ -139,11 +139,11 @@ function Set-TargetResource
         [Parameter(Mandatory=$true)]
         [ValidateLength(1,238)]
         [Alias('TaskName')]
-        [string]
+        [String]
         # The name of the scheduled task to return. Wildcards supported. This must be the *full task name*, i.e. the task's path/location and its name.
         $Name,
 
-        [string]
+        [String]
         # Install the task from this XML.
         $TaskXml,
 
@@ -152,7 +152,7 @@ function Set-TargetResource
         $TaskCredential,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # If `Present`, the service is installed/updated. If `Absent`, the service is removed.
         $Ensure = 'Present'
     )
@@ -186,17 +186,17 @@ function Set-TargetResource
 
 function Test-TargetResource
 {
-    [CmdletBinding(SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([bool])]
     param(
         [Parameter(Mandatory=$true)]
         [ValidateLength(1,238)]
         [Alias('TaskName')]
-        [string]
+        [String]
         # The name of the scheduled task to return. Wildcards supported. This must be the *full task name*, i.e. the task's path/location and its name.
         $Name,
 
-        [string]
+        [String]
         # Install the task from this XML.
         $TaskXml,
 
@@ -205,7 +205,7 @@ function Test-TargetResource
         $TaskCredential,
 
         [ValidateSet('Present','Absent')]
-        [string]
+        [String]
         # If `Present`, the task is installed/updated. If `Absent`, the task is removed.
         $Ensure = 'Present'
     )
