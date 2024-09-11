@@ -5,11 +5,12 @@ Set-StrictMode -Version 'Latest'
 BeforeAll {
     Set-StrictMode -Version 'Latest'
 
-    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-CarbonTest.ps1' -Resolve)
+    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
 
     Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath 'CarbonDscTest' -Resolve) -Force
 
     $script:tempDir = $null
+    $script:testNum = 0
 }
 
 # Only failing on 2019 build servers, but don't have time to figure out why.
@@ -17,12 +18,9 @@ $skip = (Test-Path -Path 'env:WHS_CI') -and $env:WHS_CI -eq 'True' #-and $PSVers
 
 Describe 'Get-CDscError' -Skip:$skip {
     BeforeEach {
-        $script:tempDir = New-CTempDirectory -Prefix $PSCommandPath
+        $script:tempDir = Join-Path -Path $TestDrive -ChildPath ($script:testNum++)
+        New-Item -Path $script:tempDir -ItemType 'Directory'
         [Diagnostics.Eventing.Reader.EventLogSession]::GlobalSession.ClearLog('Microsoft-Windows-DSC/Operational')
-    }
-
-    AfterEach {
-        Remove-Item $script:tempDir.FullName -Recurse
     }
 
     It 'should get dsc errors' {
@@ -46,11 +44,11 @@ Describe 'Get-CDscError' -Skip:$skip {
 
         $startTime = Get-Date
 
-        & IAmBroken -OutputPath $script:tempDir.FullName -WarningAction Ignore
+        & IAmBroken -OutputPath $script:tempDir -WarningAction Ignore
 
         Start-Sleep -Milliseconds 400
 
-        Start-DscConfiguration -Wait -ComputerName 'localhost' -Path $script:tempDir.FullName -ErrorAction SilentlyContinue -Force
+        Start-DscConfiguration -Wait -ComputerName 'localhost' -Path $script:tempDir -ErrorAction SilentlyContinue -Force
 
         $dscError = Get-CDscError -StartTime $startTime -Wait
         $dscError | Should -Not -BeNullOrEmpty

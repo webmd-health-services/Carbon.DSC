@@ -6,9 +6,10 @@ Set-StrictMode -Version 'Latest'
 BeforeAll {
     Set-StrictMode -Version 'Latest'
 
-    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-CarbonTest.ps1' -Resolve)
+    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
 
     $script:tempDir = $null
+    $script:testNum = 0
 
     function Assert-DscError
     {
@@ -37,11 +38,8 @@ $skip = (Test-Path -Path 'env:WHS_CI') -and $env:WHS_CI -eq 'True' #-and $PSVers
 
 Describe 'Write-CDscError' -Skip:$skip {
     BeforeEach {
-        $script:tempDir = New-CTempDirectory -Prefix $PSCommandPath
-    }
-
-    AfterEach {
-        Remove-Item $script:tempDir.FullName -Recurse
+        $script:tempDir = Join-Path -Path $TestDrive -ChildPath ($script:testNum++)
+        New-Item -Path $script:tempDir -ItemType 'Directory'
     }
 
     It 'should get dsc error' {
@@ -62,11 +60,11 @@ Describe 'Write-CDscError' -Skip:$skip {
 
             $startTime = Get-Date
 
-        & IAmBroken -OutputPath $script:tempDir.FullName -WarningAction Ignore
+        & IAmBroken -OutputPath $script:tempDir -WarningAction Ignore
 
         Start-Sleep -Milliseconds 100
 
-        Start-DscConfiguration -Wait -ComputerName 'localhost' -Path $script:tempDir.FullName -ErrorAction SilentlyContinue -Force
+        Start-DscConfiguration -Wait -ComputerName 'localhost' -Path $script:tempDir -ErrorAction SilentlyContinue -Force
 
         $dscError = Get-CDscError -StartTime $startTime -Wait
         $dscError | Should -Not -BeNullOrEmpty
