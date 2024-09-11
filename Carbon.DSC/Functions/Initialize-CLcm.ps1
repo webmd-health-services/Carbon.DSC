@@ -176,7 +176,7 @@ function Initialize-CLcm
         [String] $CertFile,
 
         # The password for the certificate specified by `CertFile`. It can be a `string` or a `SecureString`.
-        [Object] $CertPassword,
+        [securestring] $CertPassword,
 
         # Reboot the target computer(s) if needed.
         [Alias('RebootNodeIfNeeded')]
@@ -214,12 +214,6 @@ function Initialize-CLcm
             Write-Error -Message ('Initialize-CLcm can''t configure the local configuration manager to use the file or web download manager on Windows Server 2016 or later.')
             return
         }
-    }
-
-    if( $CertPassword -and $CertPassword -isnot [securestring] )
-    {
-        Write-CWarningOnce -Message ('You passed a plain text password to `Initialize-CLcm`. A future version of Carbon will remove support for plain-text passwords. Please pass a `SecureString` instead.')
-        $CertPassword = ConvertTo-SecureString -String $CertPassword -AsPlainText -Force
     }
 
     $thumbprint = $null

@@ -156,7 +156,7 @@ Describe 'Initialize-CLcm' -Skip:(Test-Path -Path 'env:APPVEYOR') {
         $lcm | Should -BeNullOrEmpty
     }
 
-    It 'uploads certificate with secure string and plaintext passwords' {
+    It 'uploads certificate with secure string password' {
         $securePrivateKeyPath = Join-Path -Path $PSScriptRoot -ChildPath 'TestPrivateKey2.pfx'
         $securePrivateKeyPasswod = 'fubar'
         $securePrivateKeySecurePassword = ConvertTo-SecureString -String $securePrivateKeyPasswod -AsPlainText -Force
@@ -165,18 +165,13 @@ Describe 'Initialize-CLcm' -Skip:(Test-Path -Path 'env:APPVEYOR') {
 
         Uninstall-CCertificate -Thumbprint $securePrivateKey.Thumbprint -StoreLocation LocalMachine -StoreName My
 
-        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $securePrivateKeyPath -CertPassword $securePrivateKeyPasswod
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $securePrivateKeyPath -CertPassword $securePrivateKeySecurePassword
         $Global:Error.Count | Should -Be 0
         $secureCertPath = Join-Path -Path 'cert:\LocalMachine\My' -ChildPath $securePrivateKey.Thumbprint
         (Test-Path -Path $secureCertPath -PathType Leaf) | Should -BeTrue
         $lcm.CertificateID | Should -Be $securePrivateKey.Thumbprint
 
         Uninstall-CCertificate -Thumbprint $securePrivateKey.Thumbprint -StoreLocation LocalMachine -StoreName My
-
-        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $securePrivateKeyPath -CertPassword $securePrivateKeySecurePassword
-        $Global:Error.Count | Should -Be 0
-        (Test-Path -Path $secureCertPath -PathType Leaf) | Should -BeTrue
-        $lcm.CertificateID | Should -Be $securePrivateKey.Thumbprint
     }
 
     It 'supports WhatIf' {
