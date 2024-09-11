@@ -1,0 +1,8 @@
+TOPIC
+    about_Carbon.DSC
+
+SHORT DESCRIPTION
+    Carbon.DSC is a PowerShell module for...
+
+LONG DESCRIPTION
+    The Carbon.DSC PowerShell module...
