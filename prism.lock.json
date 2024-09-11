@@ -1,4 +1,9 @@
 {
-	"PSModules": [
-	]
-  }
+    "PSModules":  [
+                      {
+                          "name":  "Carbon",
+                          "version":  "2.15.1",
+                          "repositorySourceLocation":  "https://proget.dev.webmd.com/nuget/powershellgallery.com/"
+                      }
+                  ]
+}

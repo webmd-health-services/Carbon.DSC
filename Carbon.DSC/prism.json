@@ -1,0 +1,13 @@
+{
+	"PSModules": [
+    {
+      "Name": "Carbon.Cryptography",
+      "Version": "3.*"
+    },
+    {
+      "Name": "Carbon.Core",
+      "Version": "*"
+    }
+	],
+  "PSModulesDirectoryName": "Modules"
+}

@@ -20,6 +20,16 @@ Set-StrictMode -Version 'Latest'
 # module in development has its functions in the Functions directory.
 $script:moduleRoot = $PSScriptRoot
 
+$modulesRoot = Join-Path -Path $script:moduleRoot -ChildPath 'Modules' -Resolve
+
+Import-Module -Name (Join-Path -Path $modulesRoot -ChildPath 'Carbon.Cryptography' -Resolve) `
+              -Function @('Get-CCertificate') `
+              -Verbose:$false
+
+Import-Module -Name (Join-Path -Path $modulesRoot -ChildPath 'Carbon.Core' -Resolve) `
+              -Function @('Resolve-CFullPath') `
+              -Verbose:$false
+
 # Store each of your module's functions in its own file in the Functions
 # directory. On the build server, your module's functions will be appended to
 # this file, so only dot-source files that exist on the file system. This allows

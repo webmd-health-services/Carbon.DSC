@@ -17,33 +17,59 @@ function Initialize-CLcm
     Configures a computer's DSC Local Configuration Manager (LCM).
 
     .DESCRIPTION
-    The Local Configuration Manager (LCM) is the Windows PowerShell Desired State Configuration (DSC) engine. It runs on all target computers, and it is responsible for calling the configuration resources that are included in a DSC configuration script. It can be configured to receive changes (i.e. `Push` mode) or pull and apply changes its own changes (i.e. `Pull` mode).
+    The Local Configuration Manager (LCM) is the Windows PowerShell Desired State Configuration (DSC) engine. It runs on
+    all target computers, and it is responsible for calling the configuration resources that are included in a DSC
+    configuration script. It can be configured to receive changes (i.e. `Push` mode) or pull and apply changes its own
+    changes (i.e. `Pull` mode).
 
     ## Push Mode
 
-    Push mode is simplest. The LCM only applies configurations that are pushed to it via `Start-DscConfiguration`. It is expected that all resources needed by the LCM are installed and available on the computer. To use `Push` mode, use the `Push` switch.
+    Push mode is simplest. The LCM only applies configurations that are pushed to it via `Start-DscConfiguration`. It is
+    expected that all resources needed by the LCM are installed and available on the computer. To use `Push` mode, use
+    the `Push` switch.
 
     ## Pull Mode
 
-    ***NOTE: You can't use `Initialize-CLcm` to put the local configuration manager in pull mode on Windows 2016 or later.***
+    ***NOTE: You can't use `Initialize-CLcm` to put the local configuration manager in pull mode on Windows 2016 or
+    later.***
 
-    In order to get a computer to pulls its configuration automatically, you need to configure its LCM so it knows where and how to find its DSC pull server. The pull server holds all the resources and modules needed by the computer's configuration.
+    In order to get a computer to pulls its configuration automatically, you need to configure its LCM so it knows where
+    and how to find its DSC pull server. The pull server holds all the resources and modules needed by the computer's
+    configuration.
 
-    The LCM can pull from two sources: a DSC website (the web download manager) or an SMB files hare (the file download manager). To use the web download manager, specify the URL to the website with the `ServerUrl` parameter. To use the file download manager, specify the path to the resources with the `SourcePath` parameter. This path can be an SMB share path or a local (on the LCM's computer) file system path. No matter where the LCM pulls its configuration from, you're responsible for putting all modules, resources, and .mof files at that location.
+    The LCM can pull from two sources: a DSC website (the web download manager) or an SMB files hare (the file download
+    manager). To use the web download manager, specify the URL to the website with the `ServerUrl` parameter. To use the
+    file download manager, specify the path to the resources with the `SourcePath` parameter. This path can be an SMB
+    share path or a local (on the LCM's computer) file system path. No matter where the LCM pulls its configuration
+    from, you're responsible for putting all modules, resources, and .mof files at that location.
 
-    The most frequently the LCM will *download* new configuration is every 15 minutes. This is the minimum interval. The refresh interval is set via the `RefreshIntervalMinutes` parameter. The LCM will only *apply* a configuration on one of the refreshes. At most, it will apply configuration every 2nd refresh (i.e. every other refresh). You can control the frequency when configuration is applied via the `ConfigurationFrequency` parameter. For example, if `RefreshIntervalMinutes` is set to `30`, and `ConfigurationFrequency` is set to 4, then configuration will be downloaded every 30 minutes, and applied every two hours (i.e. `30 * 4 = 120` minutes).
+    The most frequently the LCM will *download* new configuration is every 15 minutes. This is the minimum interval. The
+    refresh interval is set via the `RefreshIntervalMinutes` parameter. The LCM will only *apply* a configuration on one
+    of the refreshes. At most, it will apply configuration every 2nd refresh (i.e. every other refresh). You can control
+    the frequency when configuration is applied via the `ConfigurationFrequency` parameter. For example, if
+    `RefreshIntervalMinutes` is set to `30`, and `ConfigurationFrequency` is set to 4, then configuration will be
+    downloaded every 30 minutes, and applied every two hours (i.e. `30 * 4 = 120` minutes).
 
     The `ConfigurationMode` parameter controls *how* the LCM applies its configuration. It supports three values:
 
-     * `ApplyOnly`: Configuration is applied once and isn't applied again until a new configuration is detected. If the computer's configuration drifts, no action is taken.
+     * `ApplyOnly`: Configuration is applied once and isn't applied again until a new configuration is detected. If the
+       computer's configuration drifts, no action is taken.
      * `ApplyAndMonitor`: The same as `ApplyOnly`, but if the configuration drifts, it is reported in event logs.
-     * `ApplyAndAutoCorrect`: The same as `ApplyOnly`, and when the configuratio drifts, the discrepency is reported in event logs, and the LCM attempts to correct the configuration drift.
+     * `ApplyAndAutoCorrect`: The same as `ApplyOnly`, and when the configuratio drifts, the discrepency is reported in
+       event logs, and the LCM attempts to correct the configuration drift.
 
-    When credentials are needed on the target computer, the DSC system encrypts those credentials with a public key when generating the configuration. Those credentials are then decrypted on the target computer, using the corresponding private key. A computer can't run its configuration until the private key is installed. Use the `CertFile` and `CertPassword` parameters to specify the path to the certificate containing the private key and the private key's password, respectively. This function will use Carbon's `Install-CCertificate` function to upload the certificate to the target computer and install it in the proper Windows certificate store. To generate a public/private key pair, use `New-CRsaKeyPair`.
+    When credentials are needed on the target computer, the DSC system encrypts those credentials with a public key when
+    generating the configuration. Those credentials are then decrypted on the target computer, using the corresponding
+    private key. A computer can't run its configuration until the private key is installed. Use the `CertFile` and
+    `CertPassword` parameters to specify the path to the certificate containing the private key and the private key's
+    password, respectively. This function will use Carbon's `Install-CCertificate` function to upload the certificate to
+    the target computer and install it in the proper Windows certificate store. To generate a public/private key pair,
+    use `New-CRsaKeyPair`.
 
     Returns an object representing the computer's updated LCM settings.
 
-    See [Windows PowerShell Desired State Configuration Local Configuration Manager](http://technet.microsoft.com/en-us/library/dn249922.aspx) for more information.
+    See [Windows PowerShell Desired State Configuration Local Configuration
+    Manager](http://technet.microsoft.com/en-us/library/dn249922.aspx) for more information.
 
     This function is not available in 32-bit PowerShell 4 processes on 64-bit operating systems.
 
@@ -71,12 +97,14 @@ function Initialize-CLcm
     .EXAMPLE
     Initialize-CLcm -ConfigurationID 'fc2ffe50-13cd-4cd2-9942-d25ac66d6c13' -ComputerName '10.1.2.3' -ServerUrl 'https://10.4.5.6/PSDSCPullServer.dsc'
 
-    Demonstrates the minimum needed to configure a computer (in this case, `10.1.2.3`) to pull its configuration from a DSC web server. You can't do this on Windows 2016 or later.
+    Demonstrates the minimum needed to configure a computer (in this case, `10.1.2.3`) to pull its configuration from a
+    DSC web server. You can't do this on Windows 2016 or later.
 
     .EXAMPLE
     Initialize-CLcm -ConfigurationID 'fc2ffe50-13cd-4cd2-9942-d25ac66d6c13' -ComputerName '10.1.2.3' -SourcePath '\\10.4.5.6\DSCResources'
 
-    Demonstrates the minimum needed to configure a computer (in this case, `10.1.2.3`) to pull its configuration from an SMB file share. You can't do this on Windows 2016 or later.
+    Demonstrates the minimum needed to configure a computer (in this case, `10.1.2.3`) to pull its configuration from an
+    SMB file share. You can't do this on Windows 2016 or later.
 
     .EXAMPLE
     Initialize-CLcm -CertFile 'D:\Projects\Resources\PrivateKey.pfx' -CertPassword $secureStringPassword -ConfigurationID 'fc2ffe50-13cd-4cd2-9942-d25ac66d6c13' -ComputerName '10.1.2.3' -SourcePath '\\10.4.5.6\DSCResources'
@@ -86,7 +114,9 @@ function Initialize-CLcm
     .EXAMPLE
     Initialize-CLcm -RefreshIntervalMinutes 25 -ConfigurationFrequency 3 -ConfigurationID 'fc2ffe50-13cd-4cd2-9942-d25ac66d6c13' -ComputerName '10.1.2.3' -SourcePath '\\10.4.5.6\DSCResources'
 
-    Demonstrates how to use the `RefreshIntervalMinutes` and `ConfigurationFrequency` parameters to control when the LCM downloads new configuration and applies that configuration. In this case, new configuration is downloaded every 25 minutes, and apllied every 75 minutes (`RefreshIntervalMinutes * ConfigurationFrequency`).
+    Demonstrates how to use the `RefreshIntervalMinutes` and `ConfigurationFrequency` parameters to control when the LCM
+    downloads new configuration and applies that configuration. In this case, new configuration is downloaded every 25
+    minutes, and apllied every 75 minutes (`RefreshIntervalMinutes * ConfigurationFrequency`).
     #>
     [CmdletBinding(SupportsShouldProcess=$true)]
     param(
@@ -205,14 +235,14 @@ function Initialize-CLcm
     $privateKey = $null
     if( $CertFile )
     {
-        $CertFile = Resolve-CFullPath -Path $CertFile -NoWarn
+        $CertFile = Resolve-CFullPath -Path $CertFile
         if( -not (Test-Path -Path $CertFile -PathType Leaf) )
         {
             Write-Error ('Certificate file ''{0}'' not found.' -f $CertFile)
             return
         }
 
-        $privateKey = Get-CCertificate -Path $CertFile -Password $CertPassword -NoWarn
+        $privateKey = Get-CCertificate -Path $CertFile -Password $CertPassword
         if( -not $privateKey )
         {
             return
@@ -334,7 +364,9 @@ function Initialize-CLcm
 
         $WhatIfPreference = $originalWhatIf
 
-        $tempDir = New-CTempDirectory -Prefix 'Carbon+Initialize-CLcm+' -WhatIf:$false
+        $randomFileName = [IO.Path]::GetRandomFileName()
+        $tempDir = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath "Carbon.DSC+Initialize-CLcm+${randomFileName}"
+        New-Item -Path $tempDir -ItemType 'Directory' -WhatIf:$false | Out-Null
 
         try
         {
@@ -357,7 +389,7 @@ function Initialize-CLcm
         }
         finally
         {
-            Remove-Item -Path $tempDir -Recurse -WhatIf:$false
+            Remove-Item -Path $tempDir -Recurse -Force -WhatIf:$false -ErrorAction Ignore
         }
     }
     finally

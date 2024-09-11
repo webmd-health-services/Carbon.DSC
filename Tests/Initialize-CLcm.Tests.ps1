@@ -1,359 +1,334 @@
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#     http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
-if( Test-Path -Path 'env:APPVEYOR' )
-{
-    Write-Warning -Message 'Can''t test Initialize-Lcm under AppVeyor.'
-    return
-}
+#Requires -Version 5.1
+Set-StrictMode -Version 'Latest'
 
-$originalLcm = $null
-$tempDir = $null
-$privateKeyPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Cryptography\CarbonTestPrivateKey.pfx' -Resolve
-$publicKeyPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Cryptography\CarbonTestPublicKey.cer' -Resolve
-$publicKey = $null
-$certPath = $null
-$userName = $CarbonTestUser.UserName
-$password = 'Aa1Bb2Cc3Dd4'
+BeforeAll {
+    Set-StrictMode -Version 'Latest'
 
-function Start-TestFixture
-{
-    & (Join-Path -Path $PSScriptRoot -ChildPath '..\Initialize-CarbonTest.ps1' -Resolve)
-    $tempDir = New-TempDirectory -Prefix $PSCommandPath
-}
+    & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
 
-function Stop-TestFixture
-{
-    Uninstall-Directory -Path $tempDir -Recurse
-}
+    $modulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Carbon.DSC\Modules' -Resolve
+    Import-Module -Name (Join-Path -Path $modulesPath -ChildPath 'Carbon.Cryptography' -Resolve) `
+                  -Function @('Get-CCertificate', 'Uninstall-CCertificate') `
+                  -Verbose:$false
 
-function Start-Test
-{
-    $originalLcm = Get-DscLocalConfigurationManager
-    Uninstall-TestLcmCertificate
-}
+    $script:originalLcm = $null
+    $script:tempDir = $null
+    $script:privateKeyPath = Join-Path -Path $PSScriptRoot -ChildPath 'TestPrivateKey.pfx' -Resolve
+    $script:publicKeyPath = Join-Path -Path $PSScriptRoot -ChildPath 'TestPublicKey.cer' -Resolve
+    $script:publicKey = $null
+    $script:certPath = $null
 
-function Stop-Test
-{
-    configuration SetPullMode
+    function Uninstall-TestLcmCertificate
     {
-        Set-StrictMode -Off
-
-        $customData = @{ }
-        foreach( $item in $originalLcm.DownloadManagerCustomData )
+        $script:publicKey = Get-CCertificate -Path $script:publicKeyPath
+        $script:publicKey | Should -Not -BeNullOrEmpty
+        $script:certPath = Join-Path -Path 'cert:\LocalMachine\My' -ChildPath $script:publicKey.Thumbprint
+        if( (Test-Path -Path $script:certPath -PathType Leaf) )
         {
-            $customData[$item.key] = $item.value
+            Uninstall-CCertificate -Thumbprint $script:publicKey.Thumbprint -StoreLocation LocalMachine -StoreName My
         }
+    }
+}
 
-        node 'localhost'
+Describe 'Initialize-CLcm' -Skip:(Test-Path -Path 'env:APPVEYOR') {
+    BeforeEach {
+        $script:tempDir = Join-Path -Path $TestDrive -ChildPath ([IO.Path]::GetRandomFileName())
+        $script:originalLcm = Get-DscLocalConfigurationManager
+        Uninstall-TestLcmCertificate
+
+        $Global:Error.Clear()
+    }
+
+    AfterEach {
+        configuration SetPullMode
         {
-            LocalConfigurationManager
+            Set-StrictMode -Off
+
+            $customData = @{ }
+            foreach( $item in $script:originalLcm.DownloadManagerCustomData )
             {
-                AllowModuleOverwrite = $originalLcm.AllowModuleOverwrite;
-                ConfigurationMode = $originalLcm.ConfigurationMode;
-                ConfigurationID = $originalLcm.ConfigurationID;
-                ConfigurationModeFrequencyMins = $originalLcm.ConfigurationModeFrequencyMins;
-                CertificateID = $originalLcm.CertificateID;
-                DownloadManagerName = $originalLcm.DownloadManagerName;
-                DownloadManagerCustomData = $customData
-                RefreshMode = $originalLcm.RefreshMode;
-                RefreshFrequencyMins = $originalLcm.RefreshFrequencyMins;
-                RebootNodeIfNeeded = $originalLcm.RebootNodeIfNeeded;
+                $customData[$item.key] = $item.value
+            }
+
+            node 'localhost'
+            {
+                LocalConfigurationManager
+                {
+                    AllowModuleOverwrite = $script:originalLcm.AllowModuleOverwrite;
+                    ConfigurationMode = $script:originalLcm.ConfigurationMode;
+                    ConfigurationID = $script:originalLcm.ConfigurationID;
+                    ConfigurationModeFrequencyMins = $script:originalLcm.ConfigurationModeFrequencyMins;
+                    CertificateID = $script:originalLcm.CertificateID;
+                    DownloadManagerName = $script:originalLcm.DownloadManagerName;
+                    DownloadManagerCustomData = $customData
+                    RefreshMode = $script:originalLcm.RefreshMode;
+                    RefreshFrequencyMins = $script:originalLcm.RefreshFrequencyMins;
+                    RebootNodeIfNeeded = $script:originalLcm.RebootNodeIfNeeded;
+                }
             }
         }
+
+        $outputPath = Join-Path -Path $script:tempDir -ChildPath 'originalLcm'
+        & SetPullMode -OutputPath $outputPath
+        Set-DscLocalConfigurationManager -Path $outputPath
+        Uninstall-TestLcmCertificate
     }
 
-    $outputPath = Join-Path -Path $tempDir -ChildPath 'originalLcm'
-    & SetPullMode -OutputPath $outputPath
-    Set-DscLocalConfigurationManager -Path $outputPath
-    Uninstall-TestLcmCertificate
-}
-
-function Uninstall-TestLcmCertificate
-{
-    $script:publicKey = Get-Certificate -Path $publicKeyPath -NoWarn
-    Assert-NotNull $publicKey
-    $script:certPath = Join-Path -Path 'cert:\LocalMachine\My' -ChildPath $publicKey.Thumbprint
-    if( (Test-Path -Path $certPath -PathType Leaf) )
-    {
-        Uninstall-Certificate -Thumbprint $publicKey.Thumbprint -StoreLocation LocalMachine -StoreName My -NoWarn
-    }
-}
-
-function Test-ShouldConfigurePushMode
-{
-    $lcm = Get-DscLocalConfigurationManager
-    $rebootIfNeeded = -not $lcm.RebootNodeIfNeeded
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile $privateKeyPath -RebootIfNeeded
-    Assert-NoError
-    Assert-NotNull $lcm
-    Assert-Equal $lcm.CertificateID $publicKey.Thumbprint
-    Assert-True $lcm.RebootNodeIfNeeded
-    Assert-Equal 'Push' $lcm.RefreshMode
-    Assert-True (Test-Path -Path $certPath -PathType Leaf)
-}
-
-function Test-ShouldPreserveCertificateIDWhenCertFileNotGiven
-{
-    $lcm = Get-DscLocalConfigurationManager
-    $rebootIfNeeded = -not $lcm.RebootNodeIfNeeded
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertificateID 'fubar' -CertFile $privateKeyPath -RebootIfNeeded
-    Assert-NoError
-    Assert-Equal $publicKey.Thumbprint $lcm.CertificateID
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertificateID $publicKey.Thumbprint -RebootIfNeeded
-    Assert-Equal $publicKey.Thumbprint $lcm.CertificateID
-}
-
-function Test-ShouldValidateCertFilePath
-{
-    $originalLcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile $privateKeyPath
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile 'C:\jdskfjsdflkfjksdlf.pfx' -ErrorAction SilentlyContinue
-    Assert-Error -Last -Regex 'not found'
-    Assert-Null $lcm
-    Assert-Equal $originalLcm.CertificateID (Get-DscLocalConfigurationManager).CertificateID
-}
-
-function Test-ShouldHandleFileThatIsNotACertificate
-{
-    $originalLcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile $privateKeyPath
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile $PSCommandPath  -ErrorAction SilentlyContinue
-    Assert-Error -Last -Regex 'Failed to create X509Certificate2 object'
-    Assert-Null $lcm
-    Assert-Equal $originalLcm.CertificateID (Get-DscLocalConfigurationManager).CertificateID
-}
-
-function Test-ShouldHandleRelativeCertFilePath
-{
-    Push-Location -Path $PSScriptRoot
-    try
-    {
-        $lcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile (Resolve-Path -Path $privateKeyPath -Relative)
-        Assert-NoError
-        Assert-NotNull $lcm
-        Assert-Equal $publicKey.Thumbprint $lcm.CertificateID
-    }
-    finally
-    {
-        Pop-Location
-    }
-}
-
-function Test-ShouldValidateCertHasPrivateKey
-{
-    $originalLcm = Get-DscLocalConfigurationManager
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile $publicKeyPath -ErrorAction SilentlyContinue
-    Assert-Error -Last -Regex 'does not have a private key'
-    Assert-Null $lcm
-    Assert-Equal $originalLcm.CertificateID (Get-DscLocalConfigurationManager).CertificateID
-}
-
-function Test-ShouldClearUnprovidedPushValues
-{
-    # Make sure if no cert file specified, the original is left alone.
-    $originalLcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile $privateKeyPath -RebootIfNeeded 
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost'
-    Assert-NoError
-    Assert-NotNull $lcm
-    Assert-Null $lcm.CertificateID
-    Assert-False $lcm.RebootNodeIfNeeded
-}
-
-function Test-ShouldValidateComputerName
-{
-    $lcm = Initialize-Lcm -Push -ComputerName 'fubar' -ErrorAction SilentlyContinue
-    Assert-Error -Last -Regex 'not found or is unreachable'
-    Assert-Null $lcm
-}
-
-function Test-ShouldUploadCertificateWithSecureStringAndPlaintextPasswords
-{
-    $securePrivateKeyPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Cryptography\CarbonTestPrivateKey2.pfx'
-    $securePrivateKeyPasswod = 'fubar'
-    $securePrivateKeySecurePassword = ConvertTo-SecureString -String $securePrivateKeyPasswod -AsPlainText -Force
-    $securePrivateKey = Get-Certificate -Path $securePrivateKeyPath -Password $securePrivateKeyPasswod -NoWarn
-    Assert-NotNull $securePrivateKey
-
-    Uninstall-Certificate -Thumbprint $securePrivateKey.Thumbprint -StoreLocation LocalMachine -StoreName My -NoWarn
-
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile $securePrivateKeyPath -CertPassword $securePrivateKeyPasswod
-    Assert-NoError $lcm
-    $secureCertPath = Join-Path -Path 'cert:\LocalMachine\My' -ChildPath $securePrivateKey.Thumbprint
-    Assert-True (Test-Path -Path $secureCertPath -PathType Leaf)
-    Assert-Equal $securePrivateKey.Thumbprint $lcm.CertificateID
-
-    Uninstall-Certificate -Thumbprint $securePrivateKey.Thumbprint -StoreLocation LocalMachine -StoreName My -NoWarn
-
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile $securePrivateKeyPath -CertPassword $securePrivateKeySecurePassword
-    Assert-NoError $lcm
-    Assert-True (Test-Path -Path $secureCertPath -PathType Leaf)
-    Assert-Equal $securePrivateKey.Thumbprint $lcm.CertificateID
-}
-
-function Test-ShouldSupportWhatIf
-{
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost'
-
-    $lcm = Initialize-Lcm -Push -ComputerName 'localhost' -CertFile $privateKeyPath -WhatIf
-    Assert-NotNull $lcm
-
-    Assert-Null $lcm.CertificateID
-    Assert-False (Test-Path -Path $certPath -PathType Leaf)
-}
-
-function Test-ShouldConfigureFileDownloadManager
-{
-    $Global:Error.Clear()
-
-    $configID = [Guid]::NewGuid()
-    $lcm = Initialize-Lcm -SourcePath $PSScriptRoot `
-                          -ConfigurationID $configID `
-                          -ComputerName 'localhost' `
-                          -AllowModuleOverwrite `
-                          -CertFile $privateKeyPath `
-                          -ConfigurationMode ApplyOnly `
-                          -RebootIfNeeded `
-                          -RefreshIntervalMinutes 35 `
-                          -ConfigurationFrequency 3 `
-                          -LcmCredential $CarbonTestUser `
-                          -ErrorAction SilentlyContinue
-
-    if( [Environment]::OSVersion.Version.Major -ge 10 )
-    {
-        Assert-Error ('can''t configure\b.*\bmanager')
-        return
+    It 'configures push mode' {
+        $lcm = Get-DscLocalConfigurationManager
+        $rebootIfNeeded = -Not $lcm.RebootNodeIfNeeded
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $script:privateKeyPath -RebootIfNeeded
+        $Global:Error.Count | Should -Be 0
+        $lcm | Should -Not -BeNullOrEmpty
+        $script:publicKey.Thumbprint | Should -Be $lcm.CertificateID
+        $lcm.RebootNodeIfNeeded | Should -BeTrue
+        $lcm.RefreshMode | Should -Be 'Push'
+        (Test-Path -Path $script:certPath -PathType Leaf) | Should -BeTrue
     }
 
-    Assert-NoError 
-    Assert-NotNull $lcm
-    Assert-Equal $configID $lcm.ConfigurationID
-    Assert-True $lcm.AllowModuleOverwrite
-    Assert-True $lcm.RebootNodeIfNeeded
-    Assert-Equal 'ApplyOnly' $lcm.ConfigurationMode
-    Assert-Equal 35 $lcm.RefreshFrequencyMins
-    Assert-Equal 105 $lcm.ConfigurationModeFrequencyMins
-    Assert-Equal 'DscFileDownloadManager' $lcm.DownloadManagerName
-    Assert-Equal $PSScriptRoot $lcm.DownloadManagerCustomData[0].value
-    Assert-Equal $username $lcm.Credential.UserName
-    Assert-Equal $publicKey.Thumbprint $lcm.CertificateID
-    Assert-Equal 'Pull' $lcm.RefreshMode
-
-    $configID = [Guid]::NewGuid().ToString()
-    $lcm = Initialize-Lcm -SourcePath $env:TEMP -ConfigurationID $configID -ConfigurationMode ApplyAndMonitor -ComputerName 'localhost'
-
-    Assert-NoError 
-    Assert-NotNull $lcm
-    Assert-Equal $configID $lcm.ConfigurationID
-    Assert-False $lcm.AllowModuleOverwrite
-    Assert-False $lcm.RebootNodeIfNeeded
-    Assert-Equal 'ApplyAndMonitor' $lcm.ConfigurationMode
-    Assert-Equal 30 $lcm.RefreshFrequencyMins
-    Assert-Equal 30 $lcm.ConfigurationModeFrequencyMins
-    Assert-Equal 'DscFileDownloadManager' $lcm.DownloadManagerName
-    Assert-Equal $env:TEMP $lcm.DownloadManagerCustomData[0].value
-    Assert-Null $lcm.CertificateID
-    Assert-Null $lcm.Credential
-    Assert-Equal 'Pull' $lcm.RefreshMode
-}
-
-
-function Test-ShouldConfigureWebDownloadManager
-{
-    $Global:Error.Clear()
-
-    $configID = [Guid]::NewGuid()
-    $lcm = Initialize-Lcm -ServerUrl 'http://localhost:8976' `
-                          -AllowUnsecureConnection `
-                          -ConfigurationID $configID `
-                          -ComputerName 'localhost' `
-                          -AllowModuleOverwrite `
-                          -CertFile $privateKeyPath `
-                          -ConfigurationMode ApplyOnly `
-                          -RebootIfNeeded `
-                          -RefreshIntervalMinutes 40 `
-                          -ConfigurationFrequency 3 `
-                          -LcmCredential $CarbonTestUser `
-                          -ErrorAction SilentlyContinue
-
-    if( [Environment]::OSVersion.Version.Major -ge 10 )
-    {
-        Assert-Error ('can''t configure\b.*\bmanager')
-        return
+    It 'preserves certificate id when cert file not given' {
+        $lcm = Get-DscLocalConfigurationManager
+        $rebootIfNeeded = -Not $lcm.RebootNodeIfNeeded
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertificateID 'fubar' -CertFile $script:privateKeyPath -RebootIfNeeded
+        $Global:Error.Count | Should -Be 0
+        $lcm.CertificateID | Should -Be $script:publicKey.Thumbprint
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertificateID $script:publicKey.Thumbprint -RebootIfNeeded
+        $lcm.CertificateID | Should -Be $script:publicKey.Thumbprint
     }
 
-    Assert-NoError 
-    Assert-NotNull $lcm
-    Assert-Equal $configID $lcm.ConfigurationID
-    Assert-True $lcm.AllowModuleOverwrite
-    Assert-True $lcm.RebootNodeIfNeeded
-    Assert-Equal 'ApplyOnly' $lcm.ConfigurationMode
-    Assert-Equal 40 $lcm.RefreshFrequencyMins
-    Assert-Equal 120 $lcm.ConfigurationModeFrequencyMins
-    Assert-Equal 'WebDownloadManager' $lcm.DownloadManagerName
-    Assert-Equal 'http://localhost:8976' $lcm.DownloadManagerCustomData[0].value
-    Assert-Equal 'True' $lcm.DownloadManagerCustomData[1].value
-    Assert-Equal $username $lcm.Credential.UserName
-    Assert-Equal $publicKey.Thumbprint $lcm.CertificateID
-    Assert-Equal 'Pull' $lcm.RefreshMode
+    It 'validates cert file path' {
+        $script:originalLcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $script:privateKeyPath
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile 'C:\jdskfjsdflkfjksdlf.pfx' -ErrorAction SilentlyContinue
+        $Global:Error.Count | Should -BeGreaterThan 0
+        $Global:Error[0] | Should -Match 'not found'
+        $lcm | Should -BeNullOrEmpty
+        (Get-DscLocalConfigurationManager).CertificateID | Should -Be $script:originalLcm.CertificateID
+    }
 
-    $configID = [Guid]::NewGuid().ToString()
-    $lcm = Initialize-Lcm -ServerUrl 'https://localhost:6798' -ConfigurationID $configID -ConfigurationMode ApplyAndMonitor -ComputerName 'localhost'
+    It 'handles file that is not a certificate' {
+        $script:originalLcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $script:privateKeyPath
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $PSCommandPath  -ErrorAction SilentlyContinue
+        $Global:Error.Count | Should -BeGreaterThan 0
+        $Global:Error[0] | Should -Match 'exception creating X509Certificate2'
+        $lcm | Should -BeNullOrEmpty
+        (Get-DscLocalConfigurationManager).CertificateID | Should -Be $script:originalLcm.CertificateID
+    }
 
-    Assert-NoError 
-    Assert-NotNull $lcm
-    Assert-Equal $configID $lcm.ConfigurationID
-    Assert-False $lcm.AllowModuleOverwrite
-    Assert-False $lcm.RebootNodeIfNeeded
-    Assert-Equal 'ApplyAndMonitor' $lcm.ConfigurationMode
-    Assert-Equal 30 $lcm.RefreshFrequencyMins
-    Assert-Equal 30 $lcm.ConfigurationModeFrequencyMins
-    Assert-Equal 'WebDownloadManager' $lcm.DownloadManagerName
-    Assert-Equal 'https://localhost:6798' $lcm.DownloadManagerCustomData[0].value
-    Assert-Equal 'False' $lcm.DownloadManagerCustomData[1].value
-    Assert-Null $lcm.Credential
-    Assert-Null $lcm.CertificateID
-    Assert-Equal 'Pull' $lcm.RefreshMode
-}
+    It 'handles relative cert file path' {
+        Push-Location -Path $PSScriptRoot
+        try
+        {
+            $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile (Resolve-Path -Path $script:privateKeyPath -Relative)
+            $Global:Error.Count | Should -Be 0
+            $lcm | Should -Not -BeNullOrEmpty
+            $lcm.CertificateID | Should -Be $script:publicKey.Thumbprint
+        }
+        finally
+        {
+            Pop-Location
+        }
+    }
 
-if( [Environment]::OSVersion.Version.Major -lt 10 )
-{
-    function Test-ShouldClearPullValuesWhenSwitchingToPush
-    {
+    It 'validates cert has private key' {
+        $script:originalLcm = Get-DscLocalConfigurationManager
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $script:publicKeyPath -ErrorAction SilentlyContinue
+        $Global:Error.Count | Should -BeGreaterThan 0
+        $Global:Error[0] | Should -Match 'does not have a private key'
+        $lcm | Should -BeNullOrEmpty
+        (Get-DscLocalConfigurationManager).CertificateID | Should -Be $script:originalLcm.CertificateID
+    }
+
+    It 'clears unprovided push values' {
+        # Make sure if no cert file specified, the original is left alone.
+        $script:originalLcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $script:privateKeyPath -RebootIfNeeded
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost'
+        $Global:Error.Count | Should -Be 0
+        $lcm | Should -Not -BeNullOrEmpty
+        $lcm.CertificateID | Should -BeNullOrEmpty
+        $lcm.RebootNodeIfNeeded | Should -Be $false
+    }
+
+    It 'validates computer name' {
+        $lcm = Initialize-CLcm -Push -ComputerName 'fubar' -ErrorAction SilentlyContinue
+        $Global:Error.Count | Should -BeGreaterThan 0
+        $Global:Error[0] | Should -Match 'not found or is unreachable'
+        $lcm | Should -BeNullOrEmpty
+    }
+
+    It 'uploads certificate with secure string and plaintext passwords' {
+        $securePrivateKeyPath = Join-Path -Path $PSScriptRoot -ChildPath 'TestPrivateKey2.pfx'
+        $securePrivateKeyPasswod = 'fubar'
+        $securePrivateKeySecurePassword = ConvertTo-SecureString -String $securePrivateKeyPasswod -AsPlainText -Force
+        $securePrivateKey = Get-CCertificate -Path $securePrivateKeyPath -Password $securePrivateKeySecurePassword
+        $securePrivateKey | Should -Not -BeNullOrEmpty
+
+        Uninstall-CCertificate -Thumbprint $securePrivateKey.Thumbprint -StoreLocation LocalMachine -StoreName My
+
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $securePrivateKeyPath -CertPassword $securePrivateKeyPasswod
+        $Global:Error.Count | Should -Be 0
+        $secureCertPath = Join-Path -Path 'cert:\LocalMachine\My' -ChildPath $securePrivateKey.Thumbprint
+        (Test-Path -Path $secureCertPath -PathType Leaf) | Should -BeTrue
+        $lcm.CertificateID | Should -Be $securePrivateKey.Thumbprint
+
+        Uninstall-CCertificate -Thumbprint $securePrivateKey.Thumbprint -StoreLocation LocalMachine -StoreName My
+
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $securePrivateKeyPath -CertPassword $securePrivateKeySecurePassword
+        $Global:Error.Count | Should -Be 0
+        (Test-Path -Path $secureCertPath -PathType Leaf) | Should -BeTrue
+        $lcm.CertificateID | Should -Be $securePrivateKey.Thumbprint
+    }
+
+    It 'supports WhatIf' {
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost'
+
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost' -CertFile $script:privateKeyPath -WhatIf
+        $lcm | Should -Not -BeNullOrEmpty
+
+        $lcm.CertificateID | Should -BeNullOrEmpty
+        (Test-Path -Path $script:certPath -PathType Leaf) | Should -Be $false
+    }
+
+    It 'configures file download manager' {
+        $Global:Error.Clear()
+
         $configID = [Guid]::NewGuid()
-        $lcm = Initialize-Lcm -SourcePath $PSScriptRoot `
+        $lcm = Initialize-CLcm -SourcePath $PSScriptRoot `
                               -ConfigurationID $configID `
                               -ComputerName 'localhost' `
                               -AllowModuleOverwrite `
-                              -CertFile $privateKeyPath `
+                              -CertFile $script:privateKeyPath `
                               -ConfigurationMode ApplyOnly `
                               -RebootIfNeeded `
-                              -RefreshIntervalMinutes 45 `
+                              -RefreshIntervalMinutes 35 `
                               -ConfigurationFrequency 3 `
-                              -LcmCredential $CarbonTestUser
-        Assert-NoError    
-        Assert-NotNull $lcm
+                              -LcmCredential $CarbonTestUser `
+                              -ErrorAction SilentlyContinue
 
-        $lcm = Initialize-Lcm -Push -ComputerName 'localhost'
-        Assert-NoError 
-        Assert-NotNull $lcm
-        Assert-Null $lcm.ConfigurationID
-        Assert-Equal 'False' $lcm.AllowModuleOverwrite
-        Assert-Equal 'False' $lcm.RebootNodeIfNeeded
-        Assert-Equal 'ApplyAndMonitor' $lcm.ConfigurationMode
-        Assert-NotEqual (45 * 3) $lcm.RefreshFrequencyMins
-        Assert-NotEqual 45 $lcm.ConfigurationModeFrequencyMins
-        Assert-Null $lcm.DownloadManagerName
-        Assert-Null $lcm.DownloadManagerCustomData
-        Assert-Null $lcm.Credential
-        Assert-Null $lcm.CertificateID
-        Assert-Equal 'Push' $lcm.RefreshMode
+        if( [Environment]::OSVersion.Version.Major -ge 10 )
+        {
+            $Global:Error.Count | Should -BeGreaterThan 0
+            return
+        }
+
+        $Global:Error.Count | Should -Be 0
+        $lcm | Should -Not -BeNullOrEmpty
+        $lcm.ConfigurationID | Should -Be $configID
+        $lcm.AllowModuleOverwrite | Should -BeTrue
+        $lcm.RebootNodeIfNeeded | Should -BeTrue
+        $lcm.ConfigurationMode | Should -Be 'ApplyOnly'
+        $lcm.RefreshFrequencyMins | Should -Be 35
+        $lcm.ConfigurationModeFrequencyMins | Should -Be 105
+        $lcm.DownloadManagerName | Should -Be 'DscFileDownloadManager'
+        $lcm.DownloadManagerCustomData[0].value | Should -Be $PSScriptRoot
+        $lcm.Credential.UserName | Should -Be $username
+        $lcm.CertificateID | Should -Be $script:publicKey.Thumbprint
+        $lcm.RefreshMode | Should -Be 'Pull'
+
+        $configID = [Guid]::NewGuid().ToString()
+        $lcm = Initialize-CLcm -SourcePath $env:TEMP -ConfigurationID $configID -ConfigurationMode ApplyAndMonitor -ComputerName 'localhost'
+
+        $Global:Error.Count | Should -Be 0
+        $lcm | Should -Not -BeNullOrEmpty
+        $lcm.ConfigurationID | Should -Be $configID
+        $lcm.AllowModuleOverwrite | Should -Be $false
+        $lcm.RebootNodeIfNeeded | Should -Be $false
+        $lcm.ConfigurationMode | Should -Be 'ApplyAndMonitor'
+        $lcm.RefreshFrequencyMins | Should -Be 30
+        $lcm.ConfigurationModeFrequencyMins | Should -Be 30
+        $lcm.DownloadManagerName | Should -Be 'DscFileDownloadManager'
+        $lcm.DownloadManagerCustomData[0].value | Should -Be $env:TEMP
+        $lcm.CertificateID | Should -BeNullOrEmpty
+        $lcm.Credential | Should -BeNullOrEmpty
+        $lcm.RefreshMode | Should -Be 'Pull'
+    }
+
+
+    It 'configures web download manager' {
+        $Global:Error.Clear()
+
+        $configID = [Guid]::NewGuid()
+        $lcm = Initialize-CLcm -ServerUrl 'http://localhost:8976' `
+                              -AllowUnsecureConnection `
+                              -ConfigurationID $configID `
+                              -ComputerName 'localhost' `
+                              -AllowModuleOverwrite `
+                              -CertFile $script:privateKeyPath `
+                              -ConfigurationMode ApplyOnly `
+                              -RebootIfNeeded `
+                              -RefreshIntervalMinutes 40 `
+                              -ConfigurationFrequency 3 `
+                              -LcmCredential $CarbonTestUser `
+                              -ErrorAction SilentlyContinue
+
+        if( [Environment]::OSVersion.Version.Major -ge 10 )
+        {
+            $Global:Error.Count | Should -BeGreaterThan 0
+            return
+        }
+
+        $Global:Error.Count | Should -Be 0
+        $lcm | Should -Not -BeNullOrEmpty
+        $lcm.ConfigurationID | Should -Be $configID
+        $lcm.AllowModuleOverwrite | Should -BeTrue
+        $lcm.RebootNodeIfNeeded | Should -BeTrue
+        $lcm.ConfigurationMode | Should -Be 'ApplyOnly'
+        $lcm.RefreshFrequencyMins | Should -Be 40
+        $lcm.ConfigurationModeFrequencyMins | Should -Be 120
+        $lcm.DownloadManagerName | Should -Be 'WebDownloadManager'
+        $lcm.DownloadManagerCustomData[0].value | Should -Be 'http://localhost:8976'
+        $lcm.DownloadManagerCustomData[1].value | Should -Be 'True'
+        $lcm.Credential.UserName | Should -Be $username
+        $lcm.CertificateID | Should -Be $script:publicKey.Thumbprint
+        $lcm.RefreshMode | Should -Be 'Pull'
+
+        $configID = [Guid]::NewGuid().ToString()
+        $lcm = Initialize-CLcm -ServerUrl 'https://localhost:6798' -ConfigurationID $configID -ConfigurationMode ApplyAndMonitor -ComputerName 'localhost'
+
+        $Global:Error.Count | Should -Be 0
+        $lcm | Should -Not -BeNullOrEmpty
+        $lcm.ConfigurationID | Should -Be $configID
+        $lcm.AllowModuleOverwrite | Should -Be $false
+        $lcm.RebootNodeIfNeeded | Should -Be $false
+        $lcm.ConfigurationMode | Should -Be 'ApplyAndMonitor'
+        $lcm.RefreshFrequencyMins | Should -Be 30
+        $lcm.ConfigurationModeFrequencyMins | Should -Be 30
+        $lcm.DownloadManagerName | Should -Be 'WebDownloadManager'
+        $lcm.DownloadManagerCustomData[0].value | Should -Be 'https://localhost:6798'
+        $lcm.DownloadManagerCustomData[1].value | Should -Be 'False'
+        $lcm.Credential | Should -BeNullOrEmpty
+        $lcm.CertificateID | Should -BeNullOrEmpty
+        $lcm.RefreshMode | Should -Be 'Pull'
+    }
+
+    It 'clears pull values when switching to push' -Skip:([Environment]::OSVersion.Version.Major -ge 10) {
+        $configID = [Guid]::NewGuid()
+        $lcm = Initialize-CLcm -SourcePath $PSScriptRoot `
+                                -ConfigurationID $configID `
+                                -ComputerName 'localhost' `
+                                -AllowModuleOverwrite `
+                                -CertFile $script:privateKeyPath `
+                                -ConfigurationMode ApplyOnly `
+                                -RebootIfNeeded `
+                                -RefreshIntervalMinutes 45 `
+                                -ConfigurationFrequency 3 `
+                                -LcmCredential $CarbonTestUser
+        $Global:Error.Count | Should -Be 0
+        $lcm | Should -Not -BeNullOrEmpty
+
+        $lcm = Initialize-CLcm -Push -ComputerName 'localhost'
+        $Global:Error.Count | Should -Be 0
+        $lcm | Should -Not -BeNullOrEmpty
+        $lcm.ConfigurationID | Should -BeNullOrEmpty
+        $lcm.AllowModuleOverwrite | Should -Be 'False'
+        $lcm.RebootNodeIfNeeded | Should -Be 'False'
+        $lcm.ConfigurationMode | Should -Be 'ApplyAndMonitor'
+        $lcm.RefreshFrequencyMins | Should -Not -Be (45 * 3)
+        $lcm.ConfigurationModeFrequencyMins | Should -Not -Be 45
+        $lcm.DownloadManagerName | Should -BeNullOrEmpty
+        $lcm.DownloadManagerCustomData | Should -BeNullOrEmpty
+        $lcm.Credential | Should -BeNullOrEmpty
+        $lcm.CertificateID | Should -BeNullOrEmpty
+        $lcm.RefreshMode | Should -Be 'Push'
     }
 }

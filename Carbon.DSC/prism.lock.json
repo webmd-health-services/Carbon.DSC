@@ -1,0 +1,14 @@
+{
+    "PSModules":  [
+                      {
+                          "name":  "Carbon.Cryptography",
+                          "version":  "3.4.0",
+                          "repositorySourceLocation":  "https://proget.dev.webmd.com/nuget/powershellgallery.com/"
+                      },
+                      {
+                          "name":  "Carbon.Core",
+                          "version":  "1.4.0",
+                          "repositorySourceLocation":  "https://proget.dev.webmd.com/nuget/powershellgallery.com/"
+                      }
+                  ]
+}
