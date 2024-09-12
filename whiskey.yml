@@ -2,7 +2,9 @@
 Build:
 - PowerShell:
     ExceptDuring: Clean
-    ScriptBlock: prism install | Format-Table -Auto
+    ScriptBlock: |
+        prism install | Format-Table -Auto
+        prism install -Path Carbon.DSC | Format-Table -Auto
 
 - Version:
     Path: Carbon.DSC\Carbon.DSC.psd1
