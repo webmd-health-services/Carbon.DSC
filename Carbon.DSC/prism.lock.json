@@ -1,0 +1,34 @@
+{
+    "PSModules":  [
+                      {
+                          "name":  "Carbon",
+                          "version":  "2.15.1",
+                          "repositorySourceLocation":  "https://www.powershellgallery.com/api/v2"
+                      },
+                      {
+                          "name":  "Carbon.Accounts",
+                          "version":  "1.0.0",
+                          "repositorySourceLocation":  "https://www.powershellgallery.com/api/v2"
+                      },
+                      {
+                          "name":  "Carbon.Core",
+                          "version":  "1.4.0",
+                          "repositorySourceLocation":  "https://www.powershellgallery.com/api/v2"
+                      },
+                      {
+                          "name":  "Carbon.Cryptography",
+                          "version":  "3.4.0",
+                          "repositorySourceLocation":  "https://www.powershellgallery.com/api/v2"
+                      },
+                      {
+                          "name":  "Carbon.ScheduledTasks",
+                          "version":  "1.0.0",
+                          "repositorySourceLocation":  "https://www.powershellgallery.com/api/v2"
+                      },
+                      {
+                          "name":  "Carbon.Security",
+                          "version":  "1.0.0",
+                          "repositorySourceLocation":  "https://www.powershellgallery.com/api/v2"
+                      }
+                  ]
+}

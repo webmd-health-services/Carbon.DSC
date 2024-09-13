@@ -13,7 +13,7 @@ Execute this script as the first thing in each of your test fixtures:
 
     #Requires -Version 5.1
     Set-StrictMode -Version 'Latest'
-    
+
     & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
 #>
 [CmdletBinding()]
@@ -58,3 +58,34 @@ finally
     $Global:WhatIfPreference = $originalWhatIfPref
 }
 
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Carbon.DSC\Modules' -Resolve
+
+Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
+              -Function @('Install-CUser', 'Test-CUser') `
+              -Verbose:$false
+
+$password = 'Tt6QML1lmDrFSf'
+[pscredential]$global:CarbonTestUser =
+    [pscredential]::New('CDscTestUser', (ConvertTo-SecureString -String $password -AsPlainText -Force))
+
+if( -not (Test-CUser -Username $CarbonTestUser.UserName) )
+{
+    Install-CUser -Credential $CarbonTestUser -Description 'User used during Carbon tests.'
+
+    $usedCredential = $false
+    while( $usedCredential -ne $CarbonTestUser.UserName )
+    {
+        try
+        {
+            Write-Verbose -Message ("Attempting to launch process as ""$($CarbonTestUser.UserName)"".") -Verbose
+            $usedCredential =
+                Start-Job -ScriptBlock { [Environment]::UserName } -Credential $CarbonTestUser  |
+                Wait-Job |
+                Receive-Job
+        }
+        catch
+        {
+            Start-Sleep -Milliseconds 100
+        }
+    }
+}

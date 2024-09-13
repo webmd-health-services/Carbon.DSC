@@ -18,7 +18,7 @@
     RootModule = 'Carbon.DSC.psm1'
 
     # Version number of this module.
-    ModuleVersion = '0.0.0'
+    ModuleVersion = '1.0.0'
 
     # ID used to uniquely identify this module
     GUID = '8aa43ac0-cd66-4fc0-aa13-efa08d573946'
@@ -36,7 +36,7 @@
     Copyright = '(c) WebMD Health Services.'
 
     # Description of the functionality provided by this module
-    Description = ''
+    Description = 'A collection of helpful DSC resources.'
 
     # Minimum version of the Windows PowerShell engine required by this module
     PowerShellVersion = '5.1'
@@ -76,6 +76,13 @@
 
     # Functions to export from this module. Only list public function here.
     FunctionsToExport = @(
+        'Clear-CDscLocalResourceCache',
+        'Clear-CMofAuthoringMetadata',
+        'Copy-CDscResource',
+        'Get-CDscError',
+        'Initialize-CLcm',
+        'Test-CDscTargetResource',
+        'Write-CDscError'
     )
 
     # Cmdlets to export from this module. By default, you get a script module, so there are no cmdlets.

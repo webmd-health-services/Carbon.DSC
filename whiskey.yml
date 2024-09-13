@@ -2,13 +2,16 @@
 Build:
 - PowerShell:
     ExceptDuring: Clean
-    ScriptBlock: prism install | Format-Table -Auto
+    ScriptBlock: |
+        prism install | Format-Table -Auto
+        prism install -Path Carbon.DSC | Format-Table -Auto
 
 - Version:
     Path: Carbon.DSC\Carbon.DSC.psd1
     Prerelease:
     - main: ""
     - "*": rc1
+    IncrementPrereleaseVersion: true
 
 # Update the AppVeyor build/version number.
 - Exec:
@@ -57,6 +60,10 @@ Build:
     Path: appveyor
     Argument: [ 'PushArtifact', '.output/Carbon.DSC-$(WHISKEY_SEMVER2).zip', '-DeploymentName', 'GitHub' ]
 
+- PowerShell:
+    OnlyDuring: Build
+    Path: Start-CarbonDscTest.ps1
+
 - Pester:
     Configuration:
         Run:
@@ -69,6 +76,10 @@ Build:
             TestSuiteName: Carbon.DSC
         Output:
             Verbosity: Detailed
+
+- PowerShell:
+    OnlyDuring: Build
+    Path: Complete-CarbonDscTest.ps1
 
 - PublishPowerShellModule:
     Path: Carbon.DSC
