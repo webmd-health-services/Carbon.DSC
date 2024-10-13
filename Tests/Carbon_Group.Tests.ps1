@@ -126,6 +126,62 @@ Describe 'Carbon_Group' {
         $result = Test-TargetResource -Name $script:groupName -Description $script:description -Ensure Absent
         $result | Should -Not -BeNullOrEmpty
         $result | Should -BeFalse
+
+        # EnsureMembers='Present'
+        $commonSetupArgs = @{
+            Name = $script:groupName;
+            Ensure = 'Present';
+            Description = $script:description;
+            EnsureMembers = 'Present';
+        }
+
+        $result = Test-TargetResource -Members @() @commonSetupArgs
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeTrue -Because 'the specified members list is empty'
+
+        $result = Test-TargetResource -Members $script:username1,$script:username2 @commonSetupArgs
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeTrue -Because 'the specified members list matches the current group members list'
+
+        $result = Test-TargetResource -Members $script:username2 @commonSetupArgs
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeTrue -Because 'all specified members exist in the current group members list'
+
+        $result = Test-TargetResource -Members $script:username3 @commonSetupArgs
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeFalse -Because 'all specified members do not exist in the current group members list'
+
+        $result = Test-TargetResource -Members $script:username2,$script:username3 @commonSetupArgs
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeFalse -Because 'only some specified members exist in the current group members list'
+
+        # EnsureMembers='Absent'
+        $commonSetupArgs = @{
+            Name = $script:groupName;
+            Ensure = 'Present';
+            Description = $script:description;
+            EnsureMembers = 'Absent';
+        }
+
+        $result = Test-TargetResource -Members @() @commonSetupArgs
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeTrue -Because 'the specified members array is empty'
+
+        $result = Test-TargetResource -Members $script:username3 @commonSetupArgs
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeTrue -Because 'all specified members do not exist in the current group members list'
+
+        $result = Test-TargetResource -Members $script:username1,$script:username2 @commonSetupArgs
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeFalse -Because 'the specified members list matches the current group members list'
+
+        $result = Test-TargetResource -Members $script:username2 @commonSetupArgs
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeFalse -Because 'all specified members exist in the current group members list'
+
+        $result = Test-TargetResource -Members $script:username2,$script:username3 @commonSetupArgs
+        $result | Should -Not -BeNullOrEmpty
+        $result | Should -BeFalse -Because 'only some specified members exist in the current group members list'
     }
 
     It 'set target resource' {
@@ -143,13 +199,46 @@ Describe 'Carbon_Group' {
         $group.Members.Count | Should -Be 0
 
         # Change members
-        Set-TargetResource -Name $script:groupName -Members $script:username1 -Ensure 'Present'
+        ## EnsureMembers='Exact'
+        foreach ($i in 0..1)
+        {
+            Set-TargetResource -Name $script:groupName -Members $script:username1 -Ensure 'Present'
+        }
+
         $group = Get-CGroup -Name $script:groupName
         $group | Should -Not -BeNullOrEmpty
         $group.Name | Should -Be $script:groupName
         $group.Description | Should -BeNullOrEmpty
         $group.Members.Count | Should -Be 1
-        $group.Members[0].Sid | Should -Be $script:user1.Sid
+        $group.Members.Sid | Should -Be $script:user1.Sid
+
+        ## EnsureMembers='Present'
+        foreach ($i in 0..1)
+        {
+            Set-TargetResource -Name $script:groupName -EnsureMembers 'Present' -Members $script:username2 -Ensure 'Present'
+        }
+
+        $group = Get-CGroup -Name $script:groupName
+        $group | Should -Not -BeNullOrEmpty
+        $group.Name | Should -Be $script:groupName
+        $group.Description | Should -BeNullOrEmpty
+        $group.Members.Count | Should -Be 2
+        ($group.Members.Sid -contains $script:user1.Sid) | Should -BeTrue -Because "$script:username1 is an existing member"
+        ($group.Members.Sid -contains $script:user2.Sid) | Should -BeTrue -Because "$script:username2 should have been added to the group"
+
+        ## EnsureMembers='Absent'
+        foreach ($i in 0..1)
+        {
+            Set-TargetResource -Name $script:groupName -EnsureMembers 'Absent' -Members $script:username2 -Ensure 'Present'
+        }
+
+        $group = Get-CGroup -Name $script:groupName
+        $group | Should -Not -BeNullOrEmpty
+        $group.Name | Should -Be $script:groupName
+        $group.Description | Should -BeNullOrEmpty
+        $group.Members.Count | Should -Be 1
+        ($group.Members.Sid -notcontains $script:user2.Sid) | Should -BeTrue -Because "$script:username2 should have been removed to the group"
+        ($group.Members.Sid -contains $script:user1.Sid) | Should -BeTrue -Because "$script:username1 is an existing member"
 
         # Change description
         Set-TargetResource -Name $script:groupName -Members $script:username1 -Description 'group description' -Ensure 'Present'
