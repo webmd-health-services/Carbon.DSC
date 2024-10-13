@@ -57,20 +57,9 @@ Describe 'Carbon_Group' {
         Assert-DscResourcePresent $resource
 
         $resource.Members.Count | Should -Be $admins.Members.Count
+        $resourceMembers = $resource.Members | ForEach-Object { Resolve-CIdentity -Name $_ }
 
-        foreach( $admin in $admins.Members )
-        {
-            $found = $false
-            foreach( $potentialAdmin in $resource.Members )
-            {
-                if( $potentialAdmin.Sid -eq $admin.Sid )
-                {
-                    $found = $true
-                    break
-                }
-            }
-            $found | Should -BeTrue
-        }
+        $resourceMembers.Sid | Should -Be $admins.Members.Sid
     }
 
     It 'get target resource does not exist' {
