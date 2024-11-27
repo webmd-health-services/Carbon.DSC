@@ -7,7 +7,7 @@ BeforeAll {
 
     & (Join-Path -Path $PSScriptRoot -ChildPath 'Initialize-Test.ps1' -Resolve)
 
-    $modulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Carbon.DSC\Modules' -Resolve
+    $modulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\Carbon.DSC' -Resolve
     Import-Module -Name (Join-Path -Path $modulesPath -ChildPath 'Carbon.Cryptography' -Resolve) `
                   -Function @('Get-CCertificate', 'Uninstall-CCertificate') `
                   -Verbose:$false

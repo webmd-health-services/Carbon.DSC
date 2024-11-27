@@ -24,7 +24,7 @@ param(
 #Requires -Version 5.1
 Set-StrictMode -Version 'Latest'
 
-$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath 'Carbon.DSC\Modules' -Resolve
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath 'Carbon.DSC' -Resolve
 
 Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon' -Resolve) `
               -Function @('Get-CPowerShellModuleInstallPath', 'Uninstall-CJunction') `
