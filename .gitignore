@@ -5,4 +5,5 @@
 /Carbon.DSC/LICENSE.txt
 /Carbon.DSC/NOTICE.txt
 /Carbon.DSC/README.md
-/Carbon.DSC/Modules/
+/Carbon.DSC/Carbon
+/Carbon.DSC/Carbon.*

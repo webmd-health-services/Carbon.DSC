@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\..\Modules' -Resolve
+$psModulesPath = Join-Path -Path $PSScriptRoot -ChildPath '..\..' -Resolve
 Import-Module -Name (Join-Path -Path $psModulesPath -ChildPath 'Carbon.Security' -Resolve) `
               -Function @('Get-CPrivilege', 'Grant-CPrivilege', 'Revoke-CPrivilege')
 

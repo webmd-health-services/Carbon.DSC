@@ -18,7 +18,7 @@
     RootModule = 'Carbon.DSC.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '1.0.1'
 
     # ID used to uniquely identify this module
     GUID = '8aa43ac0-cd66-4fc0-aa13-efa08d573946'

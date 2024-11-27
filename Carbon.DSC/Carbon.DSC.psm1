@@ -20,7 +20,7 @@ Set-StrictMode -Version 'Latest'
 # module in development has its functions in the Functions directory.
 $script:moduleRoot = $PSScriptRoot
 
-$psModulesRoot = Join-Path -Path $script:moduleRoot -ChildPath 'Modules' -Resolve
+$psModulesRoot = $script:moduleRoot
 
 Import-Module -Name (Join-Path -Path $psModulesRoot -ChildPath 'Carbon.Cryptography' -Resolve) `
               -Function @('Get-CCertificate') `

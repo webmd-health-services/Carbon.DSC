@@ -1,7 +1,13 @@
 
 # Carbon.DSC Changelog
 
+## 1.0.1
+
+Reducing directory depth of internal, private nested module dependencies.
+
 ## 1.0.0
+
+> Released 13 Sep 2024
 
 ### Upgrade Instructions
 
