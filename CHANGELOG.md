@@ -1,6 +1,11 @@
 
 # Carbon.DSC Changelog
 
+## 1.1.0
+
+* Added support to Carbon_Group resource for adding new members without removing any members.
+* Added support to Carbon_Group resource for removing group members.
+
 ## 1.0.1
 
 Reducing directory depth of internal, private nested module dependencies.
