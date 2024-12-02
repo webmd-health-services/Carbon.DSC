@@ -18,6 +18,7 @@ class Carbon_Group : OMI_BaseResource
 	[Key, Description("Name of the group to configure.")] String Name;
 	[Write, Description("Description of the group.")] String Description;
 	[Write, Description("Determines whether the group is created or deleted"), ValueMap{"Present","Absent"}, Values{"Present","Absent"}] String Ensure;
-	[Write, Description("Members of the group. After configuration, only these members will be in the group.")] String Members[];
+	[Write, Description("Controls how the list of users, given in the `Members` property, get used"), ValueMap{"Exact", "Present","Absent"}, Values{"Exact", "Present","Absent"}] String EnsureMembers;
+	[Write, Description("A list of users, which is used according to value of `EnsureMembers`")] String Members[];
 };
 
